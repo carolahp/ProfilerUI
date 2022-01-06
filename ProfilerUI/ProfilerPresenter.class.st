@@ -6,7 +6,8 @@ Class {
 		'profileIt',
 		'allProcesses',
 		'navigationBar',
-		'treeTable'
+		'treeTable',
+		'profiler'
 	],
 	#category : #ProfilerUI
 }
@@ -35,13 +36,16 @@ ProfilerPresenter >> initializePresenters [
 { #category : #initialize }
 ProfilerPresenter >> newInputPanel [
 
-	code := self newCode.
+	code := self newCode
+		text: '10000 factorial'.
+		
 	allProcesses := self newCheckBox
 		                label: 'All processes';
 		                yourself.
 	profileIt := self newButton
 		             icon: (self iconNamed: #glamorousGo);
 		             label: 'Profile it';
+						 action: [ self runProfiler ] 
 		             yourself.
 
 	^ SpBoxLayout newTopToBottom
@@ -62,34 +66,27 @@ ProfilerPresenter >> newResultPanel [
 				                  help: 'Show all processes in execution tree';
 				                  action: [ self inform: 'Root!' ];
 				                  yourself);
-		                 addItem: (SpToolbarButtonPresenter new
-				      					label: '> Process 1';            
-										help: 'Take process 1 as the root of the execution tree';
-				                  action: [ self inform: 'Process1' ];
-				                  yourself);
 		                 yourself.
+
+	treeTable := self newTreeTable.
+	treeTable
+		addColumn: (SpStringTableColumn 
+			title: 'Number of subclasses'
+			evaluated: #asString);
+		roots: {Object};
+		children: [ :node | node subclasses ].
+		"contextMenu: [ (self rootCommandsGroup / 'Results tools') beRoot asMenuPresenter ]".
 
 	^ SpBoxLayout newTopToBottom
 		  add: navigationBar;
-		  "add: treeTable;"
+		  add: treeTable;
 		  yourself
-	"treeTable := self newTreeTable
-		addColumn: (SpIndexTableColumn new 
-			title: 'Weight';
-			sortFunction: #yourself ascending;
-			beNotExpandable;
-			yourself);
-		addColumn: (SpIndexTableColumn new 
-			title: 'Time';
-			sortFunction: #yourself ascending;
-			beNotExpandable;
-			yourself);
-		addColumn: (SpStringTableColumn new  
-			title: 'Name'; 
-			evaluated: [ :each | StObjectPrinter asTruncatedTextFrom: each ];
-			sortFunction: #printString ascending;
-			yourself);
-		yourself."
+
+]
+
+{ #category : #accessing }
+ProfilerPresenter >> runProfiler [
+	profiler := AndreasSystemProfiler spyOn: [ code text ]
 ]
 
 { #category : #accessing }
