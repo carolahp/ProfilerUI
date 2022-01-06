@@ -87,7 +87,8 @@ ProfilerPresenter >> runProfiler [
 
 	profiler := AndreasSystemProfiler new.
 	profiler startProfiling.
-	[ 10000 factorial ] ensure: [ 
+	
+	[ OpalCompiler new evaluate: code text ] ensure: [ 
 		self updateResultPanel.
 		profiler stopProfiling ]
 ]
