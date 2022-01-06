@@ -73,8 +73,7 @@ ProfilerPresenter >> newResultPanel [
 		addColumn: (SpStringTableColumn 
 			title: 'Number of subclasses'
 			evaluated: #asString);
-		roots: {Object};
-		children: [ :node | node subclasses ].
+		children: [ :node | node sonsOver: 0 ].
 		"contextMenu: [ (self rootCommandsGroup / 'Results tools') beRoot asMenuPresenter ]".
 
 	^ SpBoxLayout newTopToBottom
@@ -86,11 +85,21 @@ ProfilerPresenter >> newResultPanel [
 
 { #category : #accessing }
 ProfilerPresenter >> runProfiler [
-	profiler := AndreasSystemProfiler spyOn: [ code text ]
+
+	profiler := AndreasSystemProfiler new.
+	profiler startProfiling.
+	[ 10000 factorial ] ensure: [ 
+		self updateResultPanel.
+		profiler stopProfiling ]
 ]
 
 { #category : #accessing }
 ProfilerPresenter >> title [
 	
 	^ 'Profiler'.
+]
+
+{ #category : #accessing }
+ProfilerPresenter >> updateResultPanel [
+	treeTable roots: profiler rootTallyItems
 ]
