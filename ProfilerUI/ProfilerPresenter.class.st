@@ -36,24 +36,23 @@ ProfilerPresenter >> initializePresenters [
 { #category : #initialize }
 ProfilerPresenter >> newInputPanel [
 
-	code := self newCode
-		text: '10000 factorial'.
-		
+	code := self newCode text: '10000 factorial'.
+
 	allProcesses := self newCheckBox
 		                label: 'All processes';
 		                yourself.
 	profileIt := self newButton
 		             icon: (self iconNamed: #glamorousGo);
 		             label: 'Profile it';
-						 action: [ self runProfiler ] 
-		             yourself.
+		             action: [ self runProfiler ] yourself.
 
 	^ SpBoxLayout newTopToBottom
 		  add: code;
 		  add: (SpBoxLayout newLeftToRight
 				   add: allProcesses;
 				   add: profileIt;
-				   yourself);
+				   yourself)
+		  withConstraints: [ :constraints | constraints height: self class toolbarHeight ];
 		  yourself
 ]
 
@@ -77,7 +76,7 @@ ProfilerPresenter >> newResultPanel [
 		"contextMenu: [ (self rootCommandsGroup / 'Results tools') beRoot asMenuPresenter ]".
 
 	^ SpBoxLayout newTopToBottom
-		  add: navigationBar;
+		  add: navigationBar withConstraints: [ :constraints | constraints height: self class toolbarHeight ];
 		  add: treeTable;
 		  yourself
 
