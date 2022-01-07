@@ -7,8 +7,8 @@ Class {
 		'allProcesses',
 		'navigationBar',
 		'treeTable',
-		'profiler',
-		'profilerDropList'
+		'profilerDropList',
+		'profilerUI'
 	],
 	#category : #ProfilerUI
 }
@@ -78,7 +78,8 @@ ProfilerPresenter >> newInputPanel [
 
 { #category : #profiler }
 ProfilerPresenter >> newProfiler [
-	^ profilerDropList selectedItem new
+
+	^ profilerDropList selectedItem newProfilerUI
 ]
 
 { #category : #'initialize presenter' }
@@ -87,15 +88,19 @@ ProfilerPresenter >> newResultPanel [
 	navigationBar := self newToolbar
 		                 addItem: (SpToolbarButtonPresenter new
 				                  label: 'Root';
-				                  help: 'Show all processes in execution tree';
+				                  help: 'Root of the execution tree';
 				                  action: [ self inform: 'Root!' ];
 				                  yourself);
 		                 yourself.
 
 	treeTable := self newTreeTable.
 	treeTable
+		"addColumn: (SpStringTableColumn 
+			title: 'Time'
+			evaluated: #time);"
+		
 		addColumn: (SpStringTableColumn 
-			title: 'Number of subclasses'
+			title: 'name'
 			evaluated: #asString);
 		children: [ :node | node sonsOver: 0 ].
 		"contextMenu: [ (self rootCommandsGroup / 'Results tools') beRoot asMenuPresenter ]".
@@ -110,15 +115,18 @@ ProfilerPresenter >> newResultPanel [
 { #category : #actions }
 ProfilerPresenter >> runProfiler [
 
-	profiler := self newProfiler.
-	profiler startProfiling.
+	profilerUI := self newProfiler.
+	profilerUI startProfiling.
 	
 	[ OpalCompiler new evaluate: code text ] ensure: [ 
 		self updateResultPanel.
-		profiler stopProfiling ]
+		profilerUI stopProfiling ]
 ]
 
 { #category : #update }
 ProfilerPresenter >> updateResultPanel [
-	treeTable roots: profiler rootTallyItems
+	
+	treeTable 
+		roots: profilerUI rootTallyItems; 
+		expandRoots
 ]
