@@ -11,7 +11,9 @@ Class {
 		'navigationBar',
 		'treeTable',
 		'profilerDropList',
-		'profilerUI'
+		'profilerUI',
+		'minTimeText',
+		'thresholdText'
 	],
 	#category : #ProfilerUI
 }
@@ -46,7 +48,7 @@ ProfilerPresenter >> initializePresenters [
 ProfilerPresenter >> initializeWindow: aWindowPresenter [
 	aWindowPresenter
 		title: 'Profiler';
-		initialExtent: 500 @ 500
+		initialExtent: 800 @ 500
 ]
 
 { #category : #'initialize presenter' }
@@ -59,7 +61,7 @@ ProfilerPresenter >> newInputPanel [
 		items: self allProfilerClasses;
 		display: [ :each | each name ];
 		yourself.
-		
+	
 	allProcesses := self newCheckBox
 		                label: 'All processes';
 		                yourself.
@@ -90,6 +92,7 @@ ProfilerPresenter >> newProfiler [
 { #category : #'initialize presenter' }
 ProfilerPresenter >> newResultPanel [
 
+	| minTimeLabel thresholdLabel |
 	navigationBar := self newToolbar
 		                 addItem: (SpToolbarButtonPresenter new
 				                  label: 'Root';
@@ -97,30 +100,46 @@ ProfilerPresenter >> newResultPanel [
 				                  action: [ self inform: 'Root!' ];
 				                  yourself);
 		                 yourself.
-
+	minTimeLabel := self newLabel label: 'Min time %'; yourself.
+	minTimeText := self newNumberInput digits: 1; numberType: Float; minimum: 0; maximum: 100; number: 3.0; yourself.
+	thresholdLabel := self newLabel label: 'Threshold'; yourself.
+	thresholdText := self newNumberInput digits: 0; numberType: Integer; minimum: 0; number: 0; yourself.
+	
 	treeTable := self newTreeTable.
 	treeTable
 		addColumn: ((SpStringTableColumn 
 			title: 'Weight'
-			evaluated: [:each | each weight asString, ' %'])
+			evaluated: [:each | (each weight roundTo: 0.1) asString, ' %'])
 			width: 50;
 			yourself);
 			
 		addColumn: ((SpStringTableColumn 
 			title: 'Time'
-			evaluated: [:each | each time asString, ' ms'])
+			evaluated: [:each | each time rounded asStringWithCommas, ' ms'])
 			width: 50;
 			yourself);
 		
 		addColumn: (SpStringTableColumn 
 			title: 'name'
 			evaluated: #asString);
-		children: [ :node | node sonsOver: 0 ].
-		"contextMenu: [ (self rootCommandsGroup / 'Results tools') beRoot asMenuPresenter ]".
-
+			children: [ :node | node sons ]
+		"contextMenu: [ (self rootCommandsGroup / 'Results tools') beRoot asMenuPresenter ]";
+		addColumn: ((SpStringTableColumn 
+			title: 'Tally'
+			evaluated: #tally)
+			width: 100;
+			yourself).
+		
 	^ SpBoxLayout newTopToBottom
 		  add: navigationBar height: self class toolbarHeight;
 		  add: treeTable;
+		  add: (SpBoxLayout newLeftToRight
+					add: thresholdLabel width: 100;
+					add: thresholdText width: 50;
+				   add: minTimeLabel width: 100;
+				   add: minTimeText width: 50;
+				   yourself)
+		  height: self class toolbarHeight * 1.5;
 		  yourself
 
 ]
@@ -129,11 +148,16 @@ ProfilerPresenter >> newResultPanel [
 ProfilerPresenter >> runProfiler [
 
 	profilerUI := self newProfiler.
+	profilerUI threshold: thresholdText number asInteger.
+	profilerUI minTime: minTimeText number asFloat.
+	
 	profilerUI startProfiling.
 	
 	[ OpalCompiler new evaluate: code text ] ensure: [ 
+		profilerUI stopProfiling.
 		self updateResultPanel.
-		profilerUI stopProfiling ]
+		profilerUI doReport.
+		"self halt" ]
 ]
 
 { #category : #update }

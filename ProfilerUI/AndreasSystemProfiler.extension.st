@@ -6,6 +6,11 @@ AndreasSystemProfiler class >> newProfilerUI [
 ]
 
 { #category : #'*ProfilerUI' }
-AndreasSystemProfiler >> rootTallyItems [
-	^ tallyRoot sonsOver: 0 
+AndreasSystemProfiler >> tallyRoot [
+	^ tallyRoot
+]
+
+{ #category : #'*ProfilerUI' }
+AndreasSystemProfiler >> totalTime [
+	^ totalTime
 ]

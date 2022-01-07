@@ -5,19 +5,46 @@ Class {
 	#name : #TallyUI,
 	#superclass : #Object,
 	#instVars : [
-		'tallyObject'
+		'tallyObject',
+		'profilerUI'
 	],
 	#category : #ProfilerUI
 }
 
 { #category : #accessing }
 TallyUI >> printOn: aStream [
-	^ tallyObject printOn: aStream
+	tallyObject printOn: aStream
+	"aStream
+		print: tallyObject class;
+		nextPutAll: '>>';
+		print:
+			(tallyObject method ifNotNil: [ tallyObject method selector ])"
+]
+
+{ #category : #accessing }
+TallyUI >> profilerUI [
+
+	^ profilerUI
+]
+
+{ #category : #accessing }
+TallyUI >> profilerUI: anObject [
+
+	profilerUI := anObject
 ]
 
 { #category : #querying }
-TallyUI >> sonsOver: anInteger [ 
-	^ (tallyObject sonsOver: anInteger) collect: #asTallyUI
+TallyUI >> sons [
+
+	^ (tallyObject sonsOver: profilerUI threshold) collect: [ :each | 
+		  each asTallyUI
+			  profilerUI: profilerUI;
+			  yourself ]
+]
+
+{ #category : #accessing }
+TallyUI >> tally [
+	^ tallyObject tally
 ]
 
 { #category : #accessing }
@@ -34,10 +61,10 @@ TallyUI >> tallyObject: anObject [
 
 { #category : #accessing }
 TallyUI >> time [
-	^ 90
+	^ (self weight * self profilerUI totalTime / 100) 
 ]
 
 { #category : #accessing }
-TallyUI >> weight [
-	^ 100
+TallyUI >> weight [ 
+	^ self tally asFloat / profilerUI total * 100.0
 ]

@@ -5,15 +5,26 @@ Class {
 	#name : #ProfilerUI,
 	#superclass : #Object,
 	#instVars : [
-		'profiler'
+		'profiler',
+		'threshold',
+		'minTime'
 	],
 	#category : #ProfilerUI
 }
 
-{ #category : #accessing }
-ProfilerUI >> profiler [
+{ #category : #profiling }
+ProfilerUI >> doReport [ 
+	^ profiler doReport
+]
 
-	^ profiler ifNil: [ self error: 'profiler is nil' ]
+{ #category : #accessing }
+ProfilerUI >> minTime [
+	^ minTime
+]
+
+{ #category : #accessing }
+ProfilerUI >> minTime: aFloat [
+	minTime := aFloat
 ]
 
 { #category : #accessing }
@@ -25,15 +36,41 @@ ProfilerUI >> profiler: anObject [
 { #category : #accessing }
 ProfilerUI >> rootTallyItems [
 
-	^ self profiler rootTallyItems collect: #asTallyUI
+	^ (self tallyRoot sonsOver: self threshold) collect: [ :each | 
+		  each asTallyUI profilerUI: self ]
 ]
 
 { #category : #profiling }
 ProfilerUI >> startProfiling [
-	^ self profiler startProfiling
+	^ profiler startProfiling
 ]
 
 { #category : #profiling }
 ProfilerUI >> stopProfiling [
-	^ self profiler stopProfiling
+	^ profiler stopProfiling
+]
+
+{ #category : #accessing }
+ProfilerUI >> tallyRoot [ 
+	^ profiler tallyRoot
+]
+
+{ #category : #accessing }
+ProfilerUI >> threshold [
+	^ threshold
+]
+
+{ #category : #accessing }
+ProfilerUI >> threshold: aNumber [
+	threshold := aNumber
+]
+
+{ #category : #accessing }
+ProfilerUI >> total [
+	^ self tallyRoot tally
+]
+
+{ #category : #accessing }
+ProfilerUI >> totalTime [
+	^ profiler totalTime
 ]
