@@ -14,7 +14,8 @@ Class {
 		'profilerUI',
 		'minTimeText',
 		'thresholdText',
-		'treeDropList'
+		'treeDropList',
+		'summaryText'
 	],
 	#category : #ProfilerUI
 }
@@ -92,6 +93,7 @@ ProfilerPresenter >> newProfiler [
 ProfilerPresenter >> newResultPanel [
 
 	| minTimeLabel thresholdLabel |
+	summaryText := self newLabel label: 'Reporting '.
 	navigationBar := self newToolbar
 		                 addItem: (SpToolbarButtonPresenter new
 				                  label: 'Root';
@@ -121,10 +123,10 @@ ProfilerPresenter >> newResultPanel [
 		                 number: 0;
 		                 yourself.
 	treeDropList := self newDropList
-		help: 'Result visualization mode';
-		items: {'Full tree' . 'Leaves'};
-		yourself.
-	
+		                help: 'Result visualization mode';
+		                items: { 'Full tree'. 'Leaves' };
+		                yourself.
+
 	treeTable := self newTreeTable.
 	treeTable
 		addColumn: ((SpStringTableColumn
@@ -141,11 +143,19 @@ ProfilerPresenter >> newResultPanel [
 		addColumn: (SpStringTableColumn title: 'name' evaluated: #asString);
 		children: [ :node | "contextMenu: [ (self rootCommandsGroup / 'Results tools') beRoot asMenuPresenter ]" 
 			node sons ];
+		addColumn: (SpLinkTableColumn new
+				 title: 'Go';
+				 width: 70;
+				 evaluated: [ :aNode | '->' ];
+				 "action: [ :aNode |  attributeTable toggleFilter: aNode variableTag. owner updateHeaderBar. ];"
+				 sortFunction: #variableTag ascending;
+				 yourself);
 		addColumn: ((SpStringTableColumn title: 'Tally' evaluated: #tally)
-				 width: 100;
+				 width: 200;
 				 yourself).
 
 	^ SpBoxLayout newTopToBottom
+			add: summaryText height: self class toolbarHeight;
 		  add: navigationBar height: self class toolbarHeight;
 		  add: treeTable;
 		  add: (SpBoxLayout newLeftToRight
@@ -153,7 +163,7 @@ ProfilerPresenter >> newResultPanel [
 				   add: thresholdText width: 50;
 				   add: minTimeLabel width: 100;
 				   add: minTimeText width: 50;
-					add: treeDropList;
+				   add: treeDropList;
 				   yourself)
 		  height: self class toolbarHeight;
 		  yourself
@@ -180,5 +190,6 @@ ProfilerPresenter >> updateResultPanel [
 	
 	treeTable 
 		roots: profilerUI rootTallyItems; 
-		expandRoots
+		expandRoots.
+	summaryText label: 'Reporting - 186 tallies, ', profilerUI totalTime asString ,' msec.' 
 ]
