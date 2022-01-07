@@ -13,7 +13,8 @@ Class {
 		'profilerDropList',
 		'profilerUI',
 		'minTimeText',
-		'thresholdText'
+		'thresholdText',
+		'treeDropList'
 	],
 	#category : #ProfilerUI
 }
@@ -84,9 +85,7 @@ ProfilerPresenter >> newInputPanel [
 { #category : #profiler }
 ProfilerPresenter >> newProfiler [
 
-	^ ProfilerUI new
-		profiler: profilerDropList selectedItem new;
-		yourself
+	^ profilerDropList selectedItem newProfilerUI
 ]
 
 { #category : #'initialize presenter' }
@@ -100,48 +99,64 @@ ProfilerPresenter >> newResultPanel [
 				                  action: [ self inform: 'Root!' ];
 				                  yourself);
 		                 yourself.
-	minTimeLabel := self newLabel label: 'Min time %'; yourself.
-	minTimeText := self newNumberInput digits: 1; numberType: Float; minimum: 0; maximum: 100; number: 3.0; yourself.
-	thresholdLabel := self newLabel label: 'Threshold'; yourself.
-	thresholdText := self newNumberInput digits: 0; numberType: Integer; minimum: 0; number: 0; yourself.
+	minTimeLabel := self newLabel
+		                label: 'Min time %';
+		                yourself.
+	minTimeText := self newNumberInput
+		               help: 'Minimum node weight make it expansible';
+		               digits: 1;
+		               numberType: Float;
+		               minimum: 0;
+		               maximum: 100;
+		               number: 3.0;
+		               yourself.
+	thresholdLabel := self newLabel
+		                  label: 'Threshold';
+		                  yourself.
+	thresholdText := self newNumberInput
+		                 help: 'Minimum tally value of tree nodes';
+		                 numberType: Integer;
+		                 minimum: 0;
+		                 maximum: 1000;
+		                 number: 0;
+		                 yourself.
+	treeDropList := self newDropList
+		help: 'Result visualization mode';
+		items: {'Full tree' . 'Leaves'};
+		yourself.
 	
 	treeTable := self newTreeTable.
 	treeTable
-		addColumn: ((SpStringTableColumn 
-			title: 'Weight'
-			evaluated: [:each | (each weight roundTo: 0.1) asString, ' %'])
-			width: 50;
-			yourself);
-			
-		addColumn: ((SpStringTableColumn 
-			title: 'Time'
-			evaluated: [:each | each time rounded asStringWithCommas, ' ms'])
-			width: 50;
-			yourself);
-		
-		addColumn: (SpStringTableColumn 
-			title: 'name'
-			evaluated: #asString);
-			children: [ :node | node sons ]
-		"contextMenu: [ (self rootCommandsGroup / 'Results tools') beRoot asMenuPresenter ]";
-		addColumn: ((SpStringTableColumn 
-			title: 'Tally'
-			evaluated: #tally)
-			width: 100;
-			yourself).
-		
+		addColumn: ((SpStringTableColumn
+				  title: 'Weight'
+				  evaluated: [ :each | (each weight roundTo: 0.1) asString , ' %' ])
+				 width: 50;
+				 yourself);
+		addColumn: ((SpStringTableColumn
+				  title: 'Time'
+				  evaluated: [ :each | 
+					  each time rounded asStringWithCommas , ' ms' ])
+				 width: 50;
+				 yourself);
+		addColumn: (SpStringTableColumn title: 'name' evaluated: #asString);
+		children: [ :node | "contextMenu: [ (self rootCommandsGroup / 'Results tools') beRoot asMenuPresenter ]" 
+			node sons ];
+		addColumn: ((SpStringTableColumn title: 'Tally' evaluated: #tally)
+				 width: 100;
+				 yourself).
+
 	^ SpBoxLayout newTopToBottom
 		  add: navigationBar height: self class toolbarHeight;
 		  add: treeTable;
 		  add: (SpBoxLayout newLeftToRight
-					add: thresholdLabel width: 100;
-					add: thresholdText width: 50;
+				   add: thresholdLabel width: 100;
+				   add: thresholdText width: 50;
 				   add: minTimeLabel width: 100;
 				   add: minTimeText width: 50;
+					add: treeDropList;
 				   yourself)
-		  height: self class toolbarHeight * 1.5;
+		  height: self class toolbarHeight;
 		  yourself
-
 ]
 
 { #category : #actions }

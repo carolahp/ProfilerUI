@@ -35,24 +35,22 @@ ProfilerUI >> profiler: anObject [
 
 { #category : #accessing }
 ProfilerUI >> rootTallyItems [
-
-	^ (self tallyRoot sonsOver: self threshold) collect: [ :each | 
-		  each asTallyUI profilerUI: self ]
+	^ profiler rootTallyItems
 ]
 
 { #category : #profiling }
 ProfilerUI >> startProfiling [
-	^ profiler startProfiling
+	self subclassResponsibility 
 ]
 
 { #category : #profiling }
 ProfilerUI >> stopProfiling [
-	^ profiler stopProfiling
+	self subclassResponsibility 
 ]
 
 { #category : #accessing }
 ProfilerUI >> tallyRoot [ 
-	^ profiler tallyRoot
+	^ profiler tallyRoot asTallyUI profilerUI: self; yourself
 ]
 
 { #category : #accessing }
