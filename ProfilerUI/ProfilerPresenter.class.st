@@ -7,7 +7,8 @@ Class {
 		'allProcesses',
 		'navigationBar',
 		'treeTable',
-		'profiler'
+		'profiler',
+		'profilerDropList'
 	],
 	#category : #ProfilerUI
 }
@@ -20,11 +21,16 @@ ProfilerPresenter class >> open [
 		openWithSpec
 ]
 
+{ #category : #profiler }
+ProfilerPresenter >> allProfilerClasses [
+	^ { AndreasSystemProfiler . TimeProfiler . PreciseProfiler }
+]
+
 { #category : #accessing }
 ProfilerPresenter >> initializePresenters [
 
 	self layout: (SpBoxLayout newTopToBottom
-			 add: self newInputPanel expand: true;
+			 add: self newInputPanel height: 100;
 			 add: self newResultPanel expand: true;
 			 yourself).
 
@@ -33,11 +39,24 @@ ProfilerPresenter >> initializePresenters [
 		add: profileIt
 ]
 
-{ #category : #initialize }
+{ #category : #accessing }
+ProfilerPresenter >> initializeWindow: aWindowPresenter [
+	aWindowPresenter
+		title: 'Profiler';
+		initialExtent: 500 @ 500
+]
+
+{ #category : #'initialize presenter' }
 ProfilerPresenter >> newInputPanel [
 
 	code := self newCode text: '10000 factorial'.
-
+	
+	profilerDropList := self newDropList
+		help: 'Select the desired profiler.';
+		items: self allProfilerClasses;
+		display: [ :each | each name ];
+		yourself.
+		
 	allProcesses := self newCheckBox
 		                label: 'All processes';
 		                yourself.
@@ -49,14 +68,20 @@ ProfilerPresenter >> newInputPanel [
 	^ SpBoxLayout newTopToBottom
 		  add: code;
 		  add: (SpBoxLayout newLeftToRight
-				   add: allProcesses;
-				   add: profileIt;
+					add: profilerDropList;
+				   add: allProcesses width: 100;
+				   add: profileIt width: 100;
 				   yourself)
-		  withConstraints: [ :constraints | constraints height: self class toolbarHeight ];
+		  height: self class toolbarHeight;
 		  yourself
 ]
 
-{ #category : #initialize }
+{ #category : #profiler }
+ProfilerPresenter >> newProfiler [
+	^ profilerDropList selectedItem new
+]
+
+{ #category : #'initialize presenter' }
 ProfilerPresenter >> newResultPanel [
 
 	navigationBar := self newToolbar
@@ -76,16 +101,16 @@ ProfilerPresenter >> newResultPanel [
 		"contextMenu: [ (self rootCommandsGroup / 'Results tools') beRoot asMenuPresenter ]".
 
 	^ SpBoxLayout newTopToBottom
-		  add: navigationBar withConstraints: [ :constraints | constraints height: self class toolbarHeight ];
+		  add: navigationBar height: self class toolbarHeight;
 		  add: treeTable;
 		  yourself
 
 ]
 
-{ #category : #accessing }
+{ #category : #actions }
 ProfilerPresenter >> runProfiler [
 
-	profiler := AndreasSystemProfiler new.
+	profiler := self newProfiler.
 	profiler startProfiling.
 	
 	[ OpalCompiler new evaluate: code text ] ensure: [ 
@@ -93,13 +118,7 @@ ProfilerPresenter >> runProfiler [
 		profiler stopProfiling ]
 ]
 
-{ #category : #accessing }
-ProfilerPresenter >> title [
-	
-	^ 'Profiler'.
-]
-
-{ #category : #accessing }
+{ #category : #update }
 ProfilerPresenter >> updateResultPanel [
 	treeTable roots: profiler rootTallyItems
 ]
