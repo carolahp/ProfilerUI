@@ -2,9 +2,7 @@ Extension { #name : #AndreasSystemProfiler }
 
 { #category : #'*ProfilerUI' }
 AndreasSystemProfiler class >> newProfilerUI [ 
-	^ ProfilerUIAndreas new
-		profiler: self new;
-		yourself
+	^ ProfilerUIAndreas newFrom: self new
 ]
 
 { #category : #'*ProfilerUI' }

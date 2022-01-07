@@ -1,3 +1,6 @@
+"
+I am a graphical user interface for profiling code using different kinds of profilers
+"
 Class {
 	#name : #ProfilerPresenter,
 	#superclass : #SpPresenter,
@@ -79,7 +82,9 @@ ProfilerPresenter >> newInputPanel [
 { #category : #profiler }
 ProfilerPresenter >> newProfiler [
 
-	^ profilerDropList selectedItem newProfilerUI
+	^ ProfilerUI new
+		profiler: profilerDropList selectedItem new;
+		yourself
 ]
 
 { #category : #'initialize presenter' }
@@ -95,9 +100,17 @@ ProfilerPresenter >> newResultPanel [
 
 	treeTable := self newTreeTable.
 	treeTable
-		"addColumn: (SpStringTableColumn 
+		addColumn: ((SpStringTableColumn 
+			title: 'Weight'
+			evaluated: [:each | each weight asString, ' %'])
+			width: 50;
+			yourself);
+			
+		addColumn: ((SpStringTableColumn 
 			title: 'Time'
-			evaluated: #time);"
+			evaluated: [:each | each time asString, ' ms'])
+			width: 50;
+			yourself);
 		
 		addColumn: (SpStringTableColumn 
 			title: 'name'
