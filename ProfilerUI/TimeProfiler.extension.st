@@ -1,8 +1,8 @@
 Extension { #name : #TimeProfiler }
 
 { #category : #'*ProfilerUI' }
-TimeProfiler class >> newProfilerUI [ 
-	^ ProfilerUI new
+TimeProfiler class >> newProfilerModel [ 
+	^ ProfilerModel new
 		profiler: self new;
 		yourself
 ]

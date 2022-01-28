@@ -2,73 +2,73 @@
 I am an abstract adapter for profilers to be used by the ProfilerPresenter
 "
 Class {
-	#name : #ProfilerUI,
+	#name : #ProfilerModel,
 	#superclass : #Object,
 	#instVars : [
 		'profiler',
 		'threshold',
 		'minTime'
 	],
-	#category : #ProfilerUI
+	#category : #'ProfilerUI-Model'
 }
 
 { #category : #profiling }
-ProfilerUI >> doReport [ 
+ProfilerModel >> doReport [ 
 	^ profiler doReport
 ]
 
 { #category : #accessing }
-ProfilerUI >> minTime [
+ProfilerModel >> minTime [
 	^ minTime
 ]
 
 { #category : #accessing }
-ProfilerUI >> minTime: aFloat [
+ProfilerModel >> minTime: aFloat [
 	minTime := aFloat
 ]
 
 { #category : #accessing }
-ProfilerUI >> profiler: anObject [
+ProfilerModel >> profiler: anObject [
 
 	profiler := anObject
 ]
 
 { #category : #accessing }
-ProfilerUI >> rootTallyItems [
+ProfilerModel >> rootTallyItems [
 	^ profiler rootTallyItems
 ]
 
 { #category : #profiling }
-ProfilerUI >> startProfiling [
+ProfilerModel >> startProfiling [
 	self subclassResponsibility 
 ]
 
 { #category : #profiling }
-ProfilerUI >> stopProfiling [
+ProfilerModel >> stopProfiling [
 	self subclassResponsibility 
 ]
 
 { #category : #accessing }
-ProfilerUI >> tallyRoot [ 
-	^ profiler tallyRoot asTallyUI profilerUI: self; yourself
+ProfilerModel >> tallyRoot [ 
+	^ profiler tallyRoot asTallyModel profilerModel: self; yourself
 ]
 
 { #category : #accessing }
-ProfilerUI >> threshold [
+ProfilerModel >> threshold [
 	^ threshold
 ]
 
 { #category : #accessing }
-ProfilerUI >> threshold: aNumber [
+ProfilerModel >> threshold: aNumber [
 	threshold := aNumber
 ]
 
 { #category : #accessing }
-ProfilerUI >> total [
+ProfilerModel >> total [
 	^ self tallyRoot tally
 ]
 
 { #category : #accessing }
-ProfilerUI >> totalTime [
+ProfilerModel >> totalTime [
 	^ profiler totalTime
 ]

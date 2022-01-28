@@ -5,191 +5,73 @@ Class {
 	#name : #ProfilerPresenter,
 	#superclass : #SpPresenter,
 	#instVars : [
-		'code',
-		'profileIt',
-		'allProcesses',
-		'navigationBar',
-		'treeTable',
-		'profilerDropList',
-		'profilerUI',
-		'minTimeText',
-		'thresholdText',
-		'treeDropList',
-		'summaryText'
+		'controller',
+		'inputPresenter',
+		'resultsPresenter'
 	],
-	#category : #ProfilerUI
+	#category : #'ProfilerUI-View'
 }
 
 { #category : #examples }
 ProfilerPresenter class >> open [
+
 	<example>
 	
-	^ self new
-		openWithSpec
-]
-
-{ #category : #profiler }
-ProfilerPresenter >> allProfilerClasses [
-	^ { AndreasSystemProfiler . TimeProfiler . PreciseProfiler }
+	^ self new openWithSpec
 ]
 
 { #category : #accessing }
+ProfilerPresenter >> controller [
+
+	^ controller ifNil: [ controller := ProfilerController new ]
+]
+
+{ #category : #TOREMOVE }
+ProfilerPresenter >> initialExtent [
+	^ 800 @ 500
+]
+
+{ #category : #initialization }
 ProfilerPresenter >> initializePresenters [
 
 	self layout: (SpBoxLayout newTopToBottom
-			 add: self newInputPanel height: 100;
-			 add: self newResultPanel expand: true;
-			 yourself).
-
-	self focusOrder
-		add: code;
-		add: profileIt
+			 add: (inputPresenter := self newInputPresenter) height: 100;
+			 add: (resultsPresenter := self newResultsPresenter) expand: true;
+			 yourself)
 ]
 
-{ #category : #accessing }
+{ #category : #initialization }
 ProfilerPresenter >> initializeWindow: aWindowPresenter [
+	super initializeWindow: aWindowPresenter.
+
 	aWindowPresenter
-		title: 'Profiler';
-		initialExtent: 800 @ 500
+		title: self title;
+		initialExtent: self initialExtent;
+		whenClosedDo: [ self unsubscribe ].
+
 ]
 
-{ #category : #'initialize presenter' }
-ProfilerPresenter >> newInputPanel [
+{ #category : #initialization }
+ProfilerPresenter >> newInputPresenter [
 
-	code := self newCode text: '10000 factorial'.
-	
-	profilerDropList := self newDropList
-		help: 'Select the desired profiler.';
-		items: self allProfilerClasses;
-		display: [ :each | each name ];
-		yourself.
-	
-	allProcesses := self newCheckBox
-		                label: 'All processes';
-		                yourself.
-	profileIt := self newButton
-		             icon: (self iconNamed: #glamorousGo);
-		             label: 'Profile it';
-		             action: [ self runProfiler ] yourself.
-
-	^ SpBoxLayout newTopToBottom
-		  add: code;
-		  add: (SpBoxLayout newLeftToRight
-					add: profilerDropList;
-				   add: allProcesses width: 100;
-				   add: profileIt width: 100;
-				   yourself)
-		  height: self class toolbarHeight;
-		  yourself
+	^ ProfilerInputPresenter withController: self controller
 ]
 
-{ #category : #profiler }
-ProfilerPresenter >> newProfiler [
+{ #category : #initialization }
+ProfilerPresenter >> newResultsPresenter [
 
-	^ profilerDropList selectedItem newProfilerUI
+	^ ProfilerResultsPresenter withController: self controller
 ]
 
-{ #category : #'initialize presenter' }
-ProfilerPresenter >> newResultPanel [
-
-	| minTimeLabel thresholdLabel |
-	summaryText := self newLabel label: 'Reporting '.
-	navigationBar := self newToolbar
-		                 addItem: (SpToolbarButtonPresenter new
-				                  label: 'Root';
-				                  help: 'Root of the execution tree';
-				                  action: [ self inform: 'Root!' ];
-				                  yourself);
-		                 yourself.
-	minTimeLabel := self newLabel
-		                label: 'Min time %';
-		                yourself.
-	minTimeText := self newNumberInput
-		               help: 'Minimum node weight make it expansible';
-		               digits: 1;
-		               numberType: Float;
-		               minimum: 0;
-		               maximum: 100;
-		               number: 3.0;
-		               yourself.
-	thresholdLabel := self newLabel
-		                  label: 'Threshold';
-		                  yourself.
-	thresholdText := self newNumberInput
-		                 help: 'Minimum tally value of tree nodes';
-		                 numberType: Integer;
-		                 minimum: 0;
-		                 maximum: 1000;
-		                 number: 0;
-		                 yourself.
-	treeDropList := self newDropList
-		                help: 'Result visualization mode';
-		                items: { 'Full tree'. 'Leaves' };
-		                yourself.
-
-	treeTable := self newTreeTable.
-	treeTable
-		addColumn: ((SpStringTableColumn
-				  title: 'Weight'
-				  evaluated: [ :each | (each weight roundTo: 0.1) asString , ' %' ])
-				 width: 50;
-				 yourself);
-		addColumn: ((SpStringTableColumn
-				  title: 'Time'
-				  evaluated: [ :each | 
-					  each time rounded asStringWithCommas , ' ms' ])
-				 width: 50;
-				 yourself);
-		addColumn: (SpStringTableColumn title: 'name' evaluated: #asString);
-		children: [ :node | "contextMenu: [ (self rootCommandsGroup / 'Results tools') beRoot asMenuPresenter ]" 
-			node sons ];
-		addColumn: (SpLinkTableColumn new
-				 title: 'Go';
-				 width: 70;
-				 evaluated: [ :aNode | '->' ];
-				 "action: [ :aNode |  attributeTable toggleFilter: aNode variableTag. owner updateHeaderBar. ];"
-				 sortFunction: #variableTag ascending;
-				 yourself);
-		addColumn: ((SpStringTableColumn title: 'Tally' evaluated: #tally)
-				 width: 200;
-				 yourself).
-
-	^ SpBoxLayout newTopToBottom
-			add: summaryText height: self class toolbarHeight;
-		  add: navigationBar height: self class toolbarHeight;
-		  add: treeTable;
-		  add: (SpBoxLayout newLeftToRight
-				   add: thresholdLabel width: 100;
-				   add: thresholdText width: 50;
-				   add: minTimeLabel width: 100;
-				   add: minTimeText width: 50;
-				   add: treeDropList;
-				   yourself)
-		  height: self class toolbarHeight;
-		  yourself
+{ #category : #TOREMOVE }
+ProfilerPresenter >> title [
+	^ 'Profiler'
 ]
 
-{ #category : #actions }
-ProfilerPresenter >> runProfiler [
-
-	profilerUI := self newProfiler.
-	profilerUI threshold: thresholdText number asInteger.
-	profilerUI minTime: minTimeText number asFloat.
+{ #category : #initialization }
+ProfilerPresenter >> unsubscribe [
 	
-	profilerUI startProfiling.
+	resultsPresenter unsubscribeFromProfilingAnnouncements.
+	inputPresenter unsubscribeFromProfilingAnnouncements.
 	
-	[ OpalCompiler new evaluate: code text ] ensure: [ 
-		profilerUI stopProfiling.
-		self updateResultPanel.
-		profilerUI doReport.
-		"self halt" ]
-]
-
-{ #category : #update }
-ProfilerPresenter >> updateResultPanel [
-	
-	treeTable 
-		roots: profilerUI rootTallyItems; 
-		expandRoots.
-	summaryText label: 'Reporting - 186 tallies, ', profilerUI totalTime asString ,' msec.' 
 ]

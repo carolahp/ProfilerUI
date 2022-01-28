@@ -1,8 +1,8 @@
 Extension { #name : #AndreasSystemProfiler }
 
 { #category : #'*ProfilerUI' }
-AndreasSystemProfiler class >> newProfilerUI [ 
-	^ ProfilerUIAndreas new
+AndreasSystemProfiler class >> newProfilerModel [ 
+	^ ProfilerModelAndreas new
 		profiler: self new;
 		yourself
 ]

@@ -2,17 +2,17 @@
 I am an abstract adapter for tallies (from different system profilers) to be used by the ProfilerPresenter
 "
 Class {
-	#name : #TallyUI,
+	#name : #TallyModel,
 	#superclass : #Object,
 	#instVars : [
 		'tallyObject',
-		'profilerUI'
+		'profilerModel'
 	],
-	#category : #ProfilerUI
+	#category : #'ProfilerUI-Model'
 }
 
-{ #category : #accessing }
-TallyUI >> printOn: aStream [
+{ #category : #printing }
+TallyModel >> printOn: aStream [
 	tallyObject printOn: aStream
 	"aStream
 		print: tallyObject class;
@@ -22,49 +22,49 @@ TallyUI >> printOn: aStream [
 ]
 
 { #category : #accessing }
-TallyUI >> profilerUI [
+TallyModel >> profilerModel [
 
-	^ profilerUI
+	^ profilerModel
 ]
 
 { #category : #accessing }
-TallyUI >> profilerUI: anObject [
+TallyModel >> profilerModel: anObject [
 
-	profilerUI := anObject
+	profilerModel := anObject
 ]
 
 { #category : #querying }
-TallyUI >> sons [
+TallyModel >> sons [
 
-	^ (tallyObject sonsOver: profilerUI threshold) collect: [ :each | 
-		  each asTallyUI
-			  profilerUI: profilerUI;
+	^ (tallyObject sonsOver: profilerModel threshold) collect: [ :each | 
+		  each asTallyModel
+			  profilerModel: profilerModel;
 			  yourself ]
 ]
 
 { #category : #accessing }
-TallyUI >> tally [
+TallyModel >> tally [
 	^ tallyObject tally
 ]
 
 { #category : #accessing }
-TallyUI >> tallyObject [
+TallyModel >> tallyObject [
 
 	^ tallyObject
 ]
 
 { #category : #accessing }
-TallyUI >> tallyObject: anObject [
+TallyModel >> tallyObject: anObject [
 
 	tallyObject := anObject
 ]
 
 { #category : #accessing }
-TallyUI >> time [
-	^ (self weight * self profilerUI totalTime / 100) 
+TallyModel >> time [
+	^ (self weight * self profilerModel totalTime / 100) 
 ]
 
 { #category : #accessing }
-TallyUI >> weight [ 
-	^ self tally asFloat / profilerUI total * 100.0
+TallyModel >> weight [ 
+	^ self tally asFloat / profilerModel total * 100.0
 ]

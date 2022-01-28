@@ -1,8 +1,8 @@
 Extension { #name : #QSystemTally }
 
 { #category : #'*ProfilerUI' }
-QSystemTally >> asTallyUI [
-	^ TallyUIAndreas new
+QSystemTally >> asTallyModel [
+	^ TallyModelAndreas new
 		tallyObject: self;
 		yourself
 ]
