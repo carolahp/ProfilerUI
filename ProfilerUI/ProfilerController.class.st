@@ -56,6 +56,12 @@ ProfilerController >> profilerClass: aClass [
 	profilerClass := aClass
 ]
 
+{ #category : #constants }
+ProfilerController >> profilerModel [
+
+	^ profilerModel
+]
+
 { #category : #'accessing profiler' }
 ProfilerController >> rootTallyItems [
 	^ profilerModel rootTallyItems 
@@ -64,15 +70,21 @@ ProfilerController >> rootTallyItems [
 { #category : #constants }
 ProfilerController >> runProfiler [
 
+	| compiledMethod |
 	profilerModel := self newProfilerModel.
 	profilerModel threshold: 0 asInteger.
 	profilerModel minTime: 0 asFloat.
-
-	profilerModel startProfiling.
-
 	[ 
 	self announcer announce: ProfilingStartedAnnouncement new.
-	OpalCompiler new evaluate: self code ] ensure: [ 
+	compiledMethod := Smalltalk compiler
+		                  source:
+			                  'self profilerModel startProfiling. ' , self code;
+		                  context: nil;
+		                  requestor: self;
+		                  noPattern: true;
+		                  failBlock: [ ^ self ];
+		                  compile.
+	compiledMethod valueWithReceiver: self arguments: #(  ) ] ensure: [ 
 		profilerModel stopProfiling.
 		profilerModel doReport.
 		self announcer announce:
