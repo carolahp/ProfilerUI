@@ -9,53 +9,48 @@ Class {
 		'allProcessesCheckbox',
 		'profileItButton',
 		'codeInput',
-		'controller'
+		'viewModel'
 	],
 	#category : #'ProfilerUI-View'
 }
 
 { #category : #'instance creation' }
-ProfilerInputPresenter class >> withController: aProfilerController [
+ProfilerInputPresenter class >> withViewModel: aProfilerViewModel [
 	^ self basicNew
-		controller: aProfilerController;
+		viewModel: aProfilerViewModel;
 		initialize;
 		yourself
-]
-
-{ #category : #accessing }
-ProfilerInputPresenter >> controller: aProfilerController [ 
-	controller := aProfilerController
 ]
 
 { #category : #initialization }
 ProfilerInputPresenter >> initializeActions [
 
-	codeInput whenTextChangedDo: [ :text | controller code: text ].
+	codeInput whenTextChangedDo: [ :text | viewModel code: text ].
 
 	profilerDropList whenSelectedItemChangedDo: [ :item | 
-		controller profilerClass: item ].
+		viewModel profilerClass: item ].
 
 	allProcessesCheckbox whenChangedDo: [ :state | 
-		controller profileAllProcesses: state ].
+		viewModel profileAllProcesses: state ].
 
-	profileItButton action: [ controller runProfiler ]
+	profileItButton action: [ viewModel runProfiler ]
 ]
 
 { #category : #initialization }
 ProfilerInputPresenter >> initializePresenters [
 
-	codeInput := self newCode
-		             text: '10000 factorial'.
+	codeInput := self newCode text: viewModel code.
 
 	profilerDropList := self newDropList
 		                    help: 'Select the desired profiler.';
-		                    items: controller allProfilerClasses;
-		                    selectItem: controller profilerClass;
-		                    display: [ :each | each name ].
+		                    items: viewModel allProfilerClasses;
+		                    selectItem: viewModel profilerClass;
+		                    display: [ :each | each name ];
+		                    disable.
 
 	allProcessesCheckbox := self newCheckBox
 		                        label: 'All processes';
-		                        state: true;
+		                        state: viewModel profileAllProcesses;
 		                        enabled: false.
 
 	profileItButton := self newButton
@@ -80,10 +75,20 @@ ProfilerInputPresenter >> initializePresenters [
 
 { #category : #initialization }
 ProfilerInputPresenter >> subscribeOnProfilingAnnouncements [
-	controller announcer when: ProfilingStartedAnnouncement do: [ self error: 'to do: disable inputs' ].
+	viewModel announcer when: ProfilingStartedAnnouncement do: [ self error: 'to do: disable inputs' ].
 ]
 
 { #category : #initialization }
 ProfilerInputPresenter >> unsubscribeFromProfilingAnnouncements [
-	controller announcer unsubscribe: self
+	viewModel announcer unsubscribe: self
+]
+
+{ #category : #accessing }
+ProfilerInputPresenter >> viewModel [
+	^ viewModel
+]
+
+{ #category : #accessing }
+ProfilerInputPresenter >> viewModel: aProfilerViewModel [ 
+	viewModel := aProfilerViewModel
 ]

@@ -11,30 +11,39 @@ Class {
 		'treeDropList',
 		'treeTable',
 		'thresholdText',
-		'controller',
-		'summaryText'
+		'summaryText',
+		'viewModel'
 	],
 	#category : #'ProfilerUI-View'
 }
 
 { #category : #'instance creation' }
-ProfilerResultsPresenter class >> withController: aProfilerController [
+ProfilerResultsPresenter class >> withViewModel: aProfilerViewModel [
 	^ self basicNew
-		controller: aProfilerController;
+		viewModel: aProfilerViewModel;
 		initialize;
 		yourself
 ]
 
-{ #category : #accessing }
-ProfilerResultsPresenter >> controller [
+{ #category : #filtering }
+ProfilerResultsPresenter >> applyFilter [
 
-	^ controller
-]
-
-{ #category : #accessing }
-ProfilerResultsPresenter >> controller: anObject [
-
-	controller := anObject
+	| minTimePercentage thresholdTime rootItem |
+	minTimePercentage := [ self minTimeText number ] onErrorDo: [ :e | 
+		                     self
+			                     warning: 'Invalid number'
+			                     for: self minTimeText.
+		                     ^ self ].
+	thresholdTime := [ self thresholdText number ] onErrorDo: [ :e | 
+		                 self
+			                 warning: 'Invalid number'
+			                 for: self minTimeText.
+		                 ^ self ].
+	self flag: 'Refactor me, I depend on morphic'.
+	rootItem := treeTable adapter widget dataSource rootItem.
+	rootItem collapseAll.
+	rootItem expandAllSuchThat: [ :item | item time >= thresholdTime and: [ item weight >= minTimePercentage ] ].
+	treeTable refresh
 ]
 
 { #category : #initialization }
@@ -82,15 +91,17 @@ ProfilerResultsPresenter >> navigationBar [
 { #category : #initialization }
 ProfilerResultsPresenter >> newResultsConfigurationPresenter [
 
+	| filterButton |
 	thresholdText := self newNumberInput
-		                 help: 'Minimum tally value of tree nodes';
+		                 help: 'Minimum tally time to display a node';
 		                 numberType: Integer;
 		                 minimum: 0;
 		                 maximum: 1000;
 		                 number: 0;
 		                 yourself.
 	minTimeText := self newNumberInput
-		               help: 'Minimum node weight make it expansible';
+		               help:
+			               'Minimum node weight (tally time / total time) to display';
 		               digits: 1;
 		               numberType: Float;
 		               minimum: 0;
@@ -99,15 +110,25 @@ ProfilerResultsPresenter >> newResultsConfigurationPresenter [
 		               yourself.
 	treeDropList := self newDropList
 		                help: 'Result visualization mode';
-		                items: { 'Full tree'. 'Leaves' };
+		                items: viewModel treeVisualizationItems;
+		                display: [ :assoc | assoc key ];
+		                selectItem: viewModel defaultTreeVisualizationItem;
 		                yourself.
+	treeDropList whenSelectedItemChangedDo: [ :item | 
+		viewModel showLeavesOnly: item value.
+		self updateResults ].
+	filterButton := self newButton
+		                label: 'Filter';
+		                yourself.
+	filterButton action: [ self applyFilter ].
 
 	^ SpBoxLayout newLeftToRight
-		  add: (self newLabel label: 'Threshold') width: 100;
+		  add: (self newLabel label: 'Time threshold [ms]') width: 100;
 		  add: thresholdText width: 50;
-		  add: (self newLabel label: 'Min time %') width: 100;
+		  add: (self newLabel label: 'Min weight [%]') width: 100;
 		  add: minTimeText width: 50;
 		  add: treeDropList;
+		  add: filterButton;
 		  yourself
 ]
 
@@ -116,30 +137,21 @@ ProfilerResultsPresenter >> newTreeTablePresenter [
 
 	^ self newTreeTable
 		  addColumn: ((SpStringTableColumn
-				    title: 'Weight'
-				    evaluated: [ :each | 
-					    (each weight roundTo: 0.1) asString , ' %' ])
-				   width: 50;
+				    title: 'Method'
+				    evaluated: [ :node | node reportString ])
+				   width: 500;
 				   yourself);
-		  addColumn: ((SpStringTableColumn
-				    title: 'Time'
-				    evaluated: [ :each | 
-					    each time rounded asStringWithCommas , ' ms' ])
-				   width: 50;
-				   yourself);
+			children: [ :node | node sons ];
 		  addColumn:
-		  (SpStringTableColumn title: 'name' evaluated: #asString);
-		  children: [ :node | node sons ];
+			  ((SpStringTableColumn title: 'Tally' evaluated: #tally)
+				   width: 200;
+				   yourself);
 		  addColumn: (SpLinkTableColumn new
 				   title: 'Go';
 				   width: 70;
 				   evaluated: [ :aNode | '->' ];
 				   "action: [ :aNode |  attributeTable toggleFilter: aNode variableTag. owner updateHeaderBar. ];"
 				   sortFunction: #variableTag ascending;
-				   yourself);
-		  addColumn:
-			  ((SpStringTableColumn title: 'Tally' evaluated: #tally)
-				   width: 200;
 				   yourself);
 		  yourself
 ]
@@ -151,7 +163,7 @@ ProfilerResultsPresenter >> searchInput [
 
 { #category : #subscription }
 ProfilerResultsPresenter >> subscribeOnProfilingAnnouncements [
-	controller announcer when: ProfilingFinishedAnnouncement do: [ self updateResults ].
+	viewModel announcer when: ProfilingFinishedAnnouncement do: [ self updateResults ].
 ]
 
 { #category : #accessing }
@@ -181,14 +193,43 @@ ProfilerResultsPresenter >> treeTable [
 { #category : #subscription }
 ProfilerResultsPresenter >> unsubscribeFromProfilingAnnouncements [
 
-	controller announcer unsubscribe: self
+	viewModel announcer unsubscribe: self
 ]
 
 { #category : #update }
 ProfilerResultsPresenter >> updateResults [
 	
 	treeTable 
-		roots: controller rootTallyItems; 
+		roots: viewModel rootItems;
 		expandRoots.
-	summaryText label: 'Reporting - 186 tallies, ', controller totalTime asString ,' msec.' 
+	summaryText label: 'Reporting - 186 tallies, ', viewModel totalTime asString ,' msec.' 
+]
+
+{ #category : #accessing }
+ProfilerResultsPresenter >> viewModel [
+
+	^ viewModel
+]
+
+{ #category : #accessing }
+ProfilerResultsPresenter >> viewModel: anObject [
+
+	viewModel := anObject
+]
+
+{ #category : #'error signalling' }
+ProfilerResultsPresenter >> warning: aString for: aPresenter [
+
+	self newPopover
+		addStyle: 'error';
+		relativeTo: aPresenter;
+		position: SpPopoverPosition top;
+		presenter: (SpPresenter new
+				 layout: (SpBoxLayout newTopToBottom
+						  borderWidth: 2;
+						  spacing: 0;
+						  add: (self newLabel label: aString);
+						  yourself);
+				 yourself);
+		popup
 ]

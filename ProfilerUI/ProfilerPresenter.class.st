@@ -5,9 +5,9 @@ Class {
 	#name : #ProfilerPresenter,
 	#superclass : #SpPresenter,
 	#instVars : [
-		'controller',
 		'inputPresenter',
-		'resultsPresenter'
+		'resultsPresenter',
+		'viewModel'
 	],
 	#category : #'ProfilerUI-View'
 }
@@ -18,12 +18,6 @@ ProfilerPresenter class >> open [
 	<example>
 	
 	^ self new openWithSpec
-]
-
-{ #category : #accessing }
-ProfilerPresenter >> controller [
-
-	^ controller ifNil: [ controller := ProfilerController new ]
 ]
 
 { #category : #TOREMOVE }
@@ -54,13 +48,13 @@ ProfilerPresenter >> initializeWindow: aWindowPresenter [
 { #category : #initialization }
 ProfilerPresenter >> newInputPresenter [
 
-	^ ProfilerInputPresenter withController: self controller
+	^ ProfilerInputPresenter withViewModel: self viewModel
 ]
 
 { #category : #initialization }
 ProfilerPresenter >> newResultsPresenter [
 
-	^ ProfilerResultsPresenter withController: self controller
+	^ ProfilerResultsPresenter withViewModel: self viewModel
 ]
 
 { #category : #TOREMOVE }
@@ -74,4 +68,10 @@ ProfilerPresenter >> unsubscribe [
 	resultsPresenter unsubscribeFromProfilingAnnouncements.
 	inputPresenter unsubscribeFromProfilingAnnouncements.
 	
+]
+
+{ #category : #accessing }
+ProfilerPresenter >> viewModel [
+
+	^ viewModel ifNil: [ viewModel := ProfilerViewModel new ]
 ]

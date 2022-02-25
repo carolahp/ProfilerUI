@@ -6,3 +6,8 @@ QSystemTally >> asTallyModel [
 		tallyObject: self;
 		yourself
 ]
+
+{ #category : #'*ProfilerUI' }
+QSystemTally >> methodClassName [
+	^ class name
+]

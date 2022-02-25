@@ -11,6 +11,14 @@ Class {
 	#category : #'ProfilerUI-Model'
 }
 
+{ #category : #accessing }
+TallyModel >> methodName [
+
+	^ tallyObject methodClassName , '>>' , (tallyObject method
+		   ifNotNil: [ tallyObject method selector ]
+		   ifNil: [ '' ])
+]
+
 { #category : #printing }
 TallyModel >> printOn: aStream [
 	tallyObject printOn: aStream
@@ -31,6 +39,13 @@ TallyModel >> profilerModel [
 TallyModel >> profilerModel: anObject [
 
 	profilerModel := anObject
+]
+
+{ #category : #querying }
+TallyModel >> reportString [
+
+	^ (self weight printShowingDecimalPlaces: 1) , '% {'
+	  , (self time printShowingDecimalPlaces: 1) , 'ms} ' , self methodName
 ]
 
 { #category : #querying }
