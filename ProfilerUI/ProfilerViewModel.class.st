@@ -109,7 +109,7 @@ ProfilerViewModel >> rootTallyItems [
 	^ profilerModel rootTallyItems 
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #profiling }
 ProfilerViewModel >> runBlockAndProfile: aBlock [
 
 	[aBlock ensure: [ 
@@ -151,6 +151,11 @@ ProfilerViewModel >> showLeavesOnly [
 ProfilerViewModel >> showLeavesOnly: anObject [
 
 	showLeavesOnly := anObject
+]
+
+{ #category : #accessing }
+ProfilerViewModel >> totalTally [
+	^ profilerModel totalTally  
 ]
 
 { #category : #'accessing profiler' }

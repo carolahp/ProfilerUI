@@ -28,7 +28,7 @@ ProfilerResultsPresenter class >> withViewModel: aProfilerViewModel [
 { #category : #filtering }
 ProfilerResultsPresenter >> applyFilter [
 
-	| minTimePercentage thresholdTime rootItem |
+	| minTimePercentage thresholdTime |
 	minTimePercentage := [ self minTimeText number ] onErrorDo: [ :e | 
 		                     self
 			                     warning: 'Invalid number'
@@ -39,10 +39,8 @@ ProfilerResultsPresenter >> applyFilter [
 			                 warning: 'Invalid number'
 			                 for: self minTimeText.
 		                 ^ self ].
-	self flag: 'Refactor me, I depend on morphic'.
-	rootItem := treeTable adapter widget dataSource rootItem.
-	rootItem collapseAll.
-	rootItem expandAllSuchThat: [ :item | item time >= thresholdTime and: [ item weight >= minTimePercentage ] ].
+	treeTable expandAllSuchThat: [ :item | 
+		item time >= thresholdTime and: [ item weight >= minTimePercentage ] ].
 	treeTable refresh
 ]
 
@@ -161,9 +159,20 @@ ProfilerResultsPresenter >> searchInput [
 	^ searchInput 
 ]
 
+{ #category : #update }
+ProfilerResultsPresenter >> showDoItNode [
+	treeTable expandAllSuchThat: [ :item | 
+		(#( runBlockAndProfile: newProcess ensure: DoIt ) indexOf:
+			 item tallyObject method selector) > 0 ].
+	
+]
+
 { #category : #subscription }
 ProfilerResultsPresenter >> subscribeOnProfilingAnnouncements [
-	viewModel announcer when: ProfilingFinishedAnnouncement do: [ self updateResults ].
+
+	viewModel announcer when: ProfilingFinishedAnnouncement do: [ 
+		self updateResults.
+		self showDoItNode ]
 ]
 
 { #category : #accessing }
@@ -198,11 +207,12 @@ ProfilerResultsPresenter >> unsubscribeFromProfilingAnnouncements [
 
 { #category : #update }
 ProfilerResultsPresenter >> updateResults [
-	
-	treeTable 
-		roots: viewModel rootItems;
-		expandRoots.
-	summaryText label: 'Reporting - 186 tallies, ', viewModel totalTime asString ,' msec.' 
+
+	treeTable roots: viewModel rootItems. ";
+		expandRoots"
+	summaryText label:
+		'Reporting - ', viewModel totalTally asString ,' tallies, ' , viewModel totalTime asString
+		, ' msec.'
 ]
 
 { #category : #accessing }

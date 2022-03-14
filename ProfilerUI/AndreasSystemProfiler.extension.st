@@ -13,6 +13,11 @@ AndreasSystemProfiler >> tallyRoot [
 ]
 
 { #category : #'*ProfilerUI' }
+AndreasSystemProfiler >> totalTally [
+	^ totalTally
+]
+
+{ #category : #'*ProfilerUI' }
 AndreasSystemProfiler >> totalTime [
 	^ totalTime
 ]

@@ -69,6 +69,11 @@ ProfilerModel >> total [
 ]
 
 { #category : #accessing }
+ProfilerModel >> totalTally [
+	^ profiler totalTally
+]
+
+{ #category : #accessing }
 ProfilerModel >> totalTime [
 	^ profiler totalTime
 ]
