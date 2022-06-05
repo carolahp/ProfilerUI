@@ -12,6 +12,16 @@ Class {
 }
 
 { #category : #accessing }
+TallyModel >> data [
+	^ self
+]
+
+{ #category : #'collecting leaves' }
+TallyModel >> leavesInto: aCollection fromSender: anObject [ 
+	^ tallyObject leavesInto: aCollection fromSender: anObject
+]
+
+{ #category : #accessing }
 TallyModel >> methodName [
 
 	^ tallyObject methodClassName , '>>' , (tallyObject method

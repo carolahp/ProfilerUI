@@ -6,25 +6,18 @@ Class {
 	#superclass : #Object,
 	#instVars : [
 		'profiler',
-		'threshold',
-		'minTime'
+		'threshold'
 	],
 	#category : #'ProfilerUI-Model'
 }
 
-{ #category : #profiling }
-ProfilerModel >> doReport [ 
-	^ profiler doReport
-]
+{ #category : #report }
+ProfilerModel >> doReport [
+	self threshold >= 0 ifFalse: [ 
+		self error: 'Time threshold must be greater than 0' ].
 
-{ #category : #accessing }
-ProfilerModel >> minTime [
-	^ minTime
-]
-
-{ #category : #accessing }
-ProfilerModel >> minTime: aFloat [
-	minTime := aFloat
+	^ String streamContents: [ :s | 
+		profiler report: s cutoff: self threshold / 100 ]
 ]
 
 { #category : #accessing }
@@ -55,11 +48,15 @@ ProfilerModel >> tallyRoot [
 
 { #category : #accessing }
 ProfilerModel >> threshold [
-	^ threshold
+	"Minimum percentage of total time a node has to have to be created.
+	It is a number between 0 and 100"
+	^ threshold ifNil: [ threshold := 1 ]
 ]
 
 { #category : #accessing }
 ProfilerModel >> threshold: aNumber [
+	"minimum percentage of total time a node has to have to be created.
+	aNumber must be between 0 and 1"
 	threshold := aNumber
 ]
 

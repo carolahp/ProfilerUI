@@ -16,8 +16,7 @@ Class {
 ProfilerPresenter class >> open [
 
 	<example>
-	
-	^ self new openWithSpec
+	^ self new open
 ]
 
 { #category : #TOREMOVE }

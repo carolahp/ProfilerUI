@@ -18,7 +18,7 @@ Class {
 { #category : #constants }
 ProfilerViewModel >> allProfilerClasses [
 
-	^ { AndreasSystemProfiler . TimeProfiler . PreciseProfiler }
+	^ { AndreasSystemProfiler . TimeProfiler ". PreciseProfiler" }
 ]
 
 { #category : #accessing }
@@ -112,9 +112,11 @@ ProfilerViewModel >> rootTallyItems [
 { #category : #profiling }
 ProfilerViewModel >> runBlockAndProfile: aBlock [
 
-	[aBlock ensure: [ 
+	[aBlock ensure: [ | report |
 		profilerModel stopProfiling.
-		profilerModel doReport.
+		
+		report := profilerModel doReport.
+		UIManager default edit: report label: 'Spy Results'.
 
 		self announcer announce:
 			(ProfilingFinishedAnnouncement new success: true) ]] fork
@@ -124,9 +126,8 @@ ProfilerViewModel >> runBlockAndProfile: aBlock [
 ProfilerViewModel >> runProfiler [
 
 	| compiledMethod |
+	
 	profilerModel := self newProfilerModel.
-	profilerModel threshold: 0 asInteger.
-	profilerModel minTime: 0 asFloat.
 	
 	self announcer announce: ProfilingStartedAnnouncement new.
 	compiledMethod := Smalltalk compiler
@@ -168,5 +169,5 @@ ProfilerViewModel >> treeVisualizationItems [
 
 	^ { 
 		  ('Full tree' -> false).
-		  ('Leaves' -> true) }
+		  ('Leaves only' -> true) }
 ]
