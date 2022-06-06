@@ -13,11 +13,11 @@ Class {
 
 { #category : #report }
 ProfilerModel >> doReport [
-	self threshold >= 0 ifFalse: [ 
-		self error: 'Time threshold must be greater than 0' ].
+	self threshold < 0 ifTrue: [ 
+		self error: 'Time threshold cannot be negative' ].
 
 	^ String streamContents: [ :s | 
-		profiler report: s cutoff: self threshold / 100 ]
+		profiler report: s cutoff: self threshold ]
 ]
 
 { #category : #accessing }
@@ -28,7 +28,14 @@ ProfilerModel >> profiler: anObject [
 
 { #category : #accessing }
 ProfilerModel >> rootTallyItems [
-	^ profiler rootTallyItems
+
+	^ self rootTallyItemsOver: 0
+]
+
+{ #category : #'accessing roots' }
+ProfilerModel >> rootTallyItemsOver: perCent [
+	^ ((self tallyRoot sonsOver: perCent) first sonsOver: perCent)
+		  asOrderedCollection sort reverse
 ]
 
 { #category : #profiling }
@@ -42,8 +49,11 @@ ProfilerModel >> stopProfiling [
 ]
 
 { #category : #accessing }
-ProfilerModel >> tallyRoot [ 
-	^ profiler tallyRoot asTallyModel profilerModel: self; yourself
+ProfilerModel >> tallyRoot [
+
+	^ profiler tallyRoot asTallyModel
+		  profilerModel: self;
+		  yourself
 ]
 
 { #category : #accessing }
@@ -56,7 +66,7 @@ ProfilerModel >> threshold [
 { #category : #accessing }
 ProfilerModel >> threshold: aNumber [
 	"minimum percentage of total time a node has to have to be created.
-	aNumber must be between 0 and 1"
+	aNumber must be between 0 and 100"
 	threshold := aNumber
 ]
 

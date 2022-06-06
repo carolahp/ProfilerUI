@@ -11,14 +11,29 @@ Class {
 	#category : #'ProfilerUI-Model'
 }
 
+{ #category : #comparing }
+TallyModel >> <= aTallyModelAndreas [ 
+	^ self tallyObject tally <= aTallyModelAndreas tallyObject tally
+]
+
+{ #category : #transforming }
+TallyModel >> asTallyModel [
+	^ self
+]
+
 { #category : #accessing }
 TallyModel >> data [
 	^ self
 ]
 
 { #category : #'collecting leaves' }
-TallyModel >> leavesInto: aCollection fromSender: anObject [ 
-	^ tallyObject leavesInto: aCollection fromSender: anObject
+TallyModel >> leavesInto: aCollection fromSender: anObject [
+
+	tallyObject leavesInto: aCollection fromSender: anObject.
+	aCollection associationsDo: [ :assoc | 
+		assoc value: (assoc value asTallyModel
+				 profilerModel: profilerModel;
+				 yourself) ]
 ]
 
 { #category : #accessing }
@@ -61,7 +76,14 @@ TallyModel >> reportString [
 { #category : #querying }
 TallyModel >> sons [
 
-	^ (tallyObject sonsOver: profilerModel threshold) collect: [ :each | 
+	^ self sonsOver: 0
+]
+
+{ #category : #accessing }
+TallyModel >> sonsOver: perCent [ 
+	| threshold |
+	threshold := (perCent asFloat / 100 * tallyObject tally) rounded.
+	^ (tallyObject sonsOver: threshold) collect: [ :each | 
 		  each asTallyModel
 			  profilerModel: profilerModel;
 			  yourself ]

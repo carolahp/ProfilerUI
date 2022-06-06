@@ -33,7 +33,9 @@ ProfilerInputPresenter >> initializeActions [
 	allProcessesCheckbox whenChangedDo: [ :state | 
 		viewModel profileAllProcesses: state ].
 
-	profileItButton action: [ viewModel runProfiler ]
+	profileItButton action: [ 
+		viewModel profilerThreshold: 0.
+		viewModel runProfiler ]
 ]
 
 { #category : #initialization }
@@ -49,22 +51,24 @@ ProfilerInputPresenter >> initializePresenters [
 		                    disable.
 
 	allProcessesCheckbox := self newCheckBox
-		                        label: 'All processes';
+		                        label: 'Profile all processes';
 		                        state: viewModel profileAllProcesses;
 		                        enabled: false.
 
 	profileItButton := self newButton
 		                   icon: (self iconNamed: #glamorousGo);
 		                   label: 'Profile it'.
-
-	self layout: (SpBoxLayout newTopToBottom
+	
+	self layout: (SpBoxLayout newLeftToRight
 			 add: codeInput;
-			 add: (SpBoxLayout newLeftToRight
+			 add: (SpBoxLayout newTopToBottom
 					  add: profilerDropList;
-					  add: allProcessesCheckbox width: 100;
-					  add: profileItButton width: 100;
+					  add: allProcessesCheckbox;
+					  add: profileItButton;
 					  yourself)
-			 height: self class toolbarHeight;
+			 expand: false
+			 fill: false
+			 padding: 5;
 			 yourself).
 
 	self focusOrder

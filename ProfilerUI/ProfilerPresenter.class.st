@@ -19,9 +19,9 @@ ProfilerPresenter class >> open [
 	^ self new open
 ]
 
-{ #category : #TOREMOVE }
-ProfilerPresenter >> initialExtent [
-	^ 800 @ 500
+{ #category : #initialization }
+ProfilerPresenter >> initExtent [
+	^ 800 @ 800
 ]
 
 { #category : #initialization }
@@ -35,13 +35,10 @@ ProfilerPresenter >> initializePresenters [
 
 { #category : #initialization }
 ProfilerPresenter >> initializeWindow: aWindowPresenter [
-	super initializeWindow: aWindowPresenter.
-
 	aWindowPresenter
-		title: self title;
-		initialExtent: self initialExtent;
-		whenClosedDo: [ self unsubscribe ].
-
+		title: self presenterTitle;
+		initialExtent: self initExtent;
+		windowIcon: self windowIcon
 ]
 
 { #category : #initialization }
@@ -56,8 +53,8 @@ ProfilerPresenter >> newResultsPresenter [
 	^ ProfilerResultsPresenter withViewModel: self viewModel
 ]
 
-{ #category : #TOREMOVE }
-ProfilerPresenter >> title [
+{ #category : #accessing }
+ProfilerPresenter >> presenterTitle [
 	^ 'Profiler'
 ]
 

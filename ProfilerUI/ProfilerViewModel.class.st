@@ -10,7 +10,8 @@ Class {
 		'code',
 		'profilerClass',
 		'profileAllProcesses',
-		'showLeavesOnly'
+		'showLeavesOnly',
+		'profilerThreshold'
 	],
 	#category : #'ProfilerUI-ViewModel'
 }
@@ -54,12 +55,12 @@ ProfilerViewModel >> initialize [
 ProfilerViewModel >> leaveItems [
 	| res  |
 	res := OrderedCollection new.
-	self rootTallyItems 
+	profilerModel tallyRoot 
 		ifNotNil: [ 
 			| dict |
 			dict := IdentityDictionary new: 100.
-			self rootTallyItems leavesInto: dict fromSender: nil.
-			res addAll: dict asOrderedCollection ].
+			profilerModel tallyRoot leavesInto: dict fromSender: nil.
+			res addAll: (dict asOrderedCollection sort reverse)].
 	^ res
 ]
 
@@ -96,6 +97,12 @@ ProfilerViewModel >> profilerModel [
 ]
 
 { #category : #accessing }
+ProfilerViewModel >> profilerThreshold: aFloat [
+
+	profilerThreshold := aFloat
+]
+
+{ #category : #accessing }
 ProfilerViewModel >> rootItems [
 
 	^ showLeavesOnly
@@ -103,21 +110,23 @@ ProfilerViewModel >> rootItems [
 		ifFalse: [ self rootTallyItems ]
 ]
 
-{ #category : #'accessing profiler' }
+{ #category : #'accessing roots' }
 ProfilerViewModel >> rootTallyItems [
 
-	^ profilerModel rootTallyItems 
+	^ self rootTallyItemsOver: 0
+]
+
+{ #category : #'accessing roots' }
+ProfilerViewModel >> rootTallyItemsOver: anInteger [ 
+
+	^ profilerModel rootTallyItemsOver: anInteger
 ]
 
 { #category : #profiling }
 ProfilerViewModel >> runBlockAndProfile: aBlock [
 
-	[aBlock ensure: [ | report |
+	[aBlock ensure: [ 
 		profilerModel stopProfiling.
-		
-		report := profilerModel doReport.
-		UIManager default edit: report label: 'Spy Results'.
-
 		self announcer announce:
 			(ProfilingFinishedAnnouncement new success: true) ]] fork
 ]
@@ -126,8 +135,8 @@ ProfilerViewModel >> runBlockAndProfile: aBlock [
 ProfilerViewModel >> runProfiler [
 
 	| compiledMethod |
-	
 	profilerModel := self newProfilerModel.
+	profilerModel threshold: profilerThreshold.
 	
 	self announcer announce: ProfilingStartedAnnouncement new.
 	compiledMethod := Smalltalk compiler
@@ -159,7 +168,7 @@ ProfilerViewModel >> totalTally [
 	^ profilerModel totalTally  
 ]
 
-{ #category : #'accessing profiler' }
+{ #category : #'accessing roots' }
 ProfilerViewModel >> totalTime [
 	^ profilerModel totalTime
 ]
