@@ -11,7 +11,8 @@ Class {
 		'profilerClass',
 		'profileAllProcesses',
 		'showLeavesOnly',
-		'profilerThreshold'
+		'profilerThreshold',
+		'showNodeThreshold'
 	],
 	#category : #'ProfilerUI-ViewModel'
 }
@@ -37,31 +38,29 @@ ProfilerViewModel >> code: aString [
 	code := aString
 ]
 
-{ #category : #accessing }
-ProfilerViewModel >> defaultTreeVisualizationItem [
-
-	^ 'Full tree' -> false
+{ #category : #api }
+ProfilerViewModel >> hideNodesUnder: aNumber [
+	"minimum percentage a node must have to be shown"
+	showNodeThreshold := aNumber
 ]
 
-{ #category : #initialize }
+{ #category : #initialization }
 ProfilerViewModel >> initialize [ 
 	super initialize.
 	showLeavesOnly := false.
+	showNodeThreshold := 0.
 	profileAllProcesses := true.
 	code := '10000 factorial'
 ]
 
 { #category : #accessing }
 ProfilerViewModel >> leaveItems [
-	| res  |
-	res := OrderedCollection new.
-	profilerModel tallyRoot 
-		ifNotNil: [ 
-			| dict |
-			dict := IdentityDictionary new: 100.
-			profilerModel tallyRoot leavesInto: dict fromSender: nil.
-			res addAll: (dict asOrderedCollection sort reverse)].
-	^ res
+	^ profilerModel leaveItems
+]
+
+{ #category : #'accessing nodes' }
+ProfilerViewModel >> leaveItemsOver: perCent [
+	^ profilerModel leaveItemsOver: perCent
 ]
 
 { #category : #constants }
@@ -106,8 +105,8 @@ ProfilerViewModel >> profilerThreshold: aFloat [
 ProfilerViewModel >> rootItems [
 
 	^ showLeavesOnly
-		ifTrue: [ self leaveItems ]
-		ifFalse: [ self rootTallyItems ]
+		ifTrue: [ self leaveItemsOver: showNodeThreshold ]
+		ifFalse: [ self rootTallyItemsOver: showNodeThreshold ]
 ]
 
 { #category : #'accessing roots' }
@@ -161,6 +160,11 @@ ProfilerViewModel >> showLeavesOnly [
 ProfilerViewModel >> showLeavesOnly: anObject [
 
 	showLeavesOnly := anObject
+]
+
+{ #category : #accessing }
+ProfilerViewModel >> showNodeThreshold [
+	^ showNodeThreshold
 ]
 
 { #category : #accessing }

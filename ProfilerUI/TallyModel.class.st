@@ -47,11 +47,6 @@ TallyModel >> methodName [
 { #category : #printing }
 TallyModel >> printOn: aStream [
 	tallyObject printOn: aStream
-	"aStream
-		print: tallyObject class;
-		nextPutAll: '>>';
-		print:
-			(tallyObject method ifNotNil: [ tallyObject method selector ])"
 ]
 
 { #category : #accessing }

@@ -20,19 +20,40 @@ ProfilerModel >> doReport [
 		profiler report: s cutoff: self threshold ]
 ]
 
+{ #category : #'accessing tree' }
+ProfilerModel >> leaveItems [
+	| res  |
+	res := OrderedCollection new.
+	self tallyRoot 
+		ifNotNil: [ 
+			| dict |
+			dict := IdentityDictionary new: 100.
+			self tallyRoot leavesInto: dict fromSender: nil.
+			res addAll: (dict asOrderedCollection sort reverse)].
+	^ res
+]
+
+{ #category : #'accessing tree' }
+ProfilerModel >> leaveItemsOver: perCent [
+
+	| leaveThreshold |
+	leaveThreshold := (perCent asFloat / 100 * self tallyRoot tally) rounded.
+	^ self leaveItems select: [ :item | item tally > leaveThreshold ]
+]
+
 { #category : #accessing }
 ProfilerModel >> profiler: anObject [
 
 	profiler := anObject
 ]
 
-{ #category : #accessing }
+{ #category : #'accessing tree' }
 ProfilerModel >> rootTallyItems [
 
 	^ self rootTallyItemsOver: 0
 ]
 
-{ #category : #'accessing roots' }
+{ #category : #'accessing tree' }
 ProfilerModel >> rootTallyItemsOver: perCent [
 	^ (self tallyRoot sonsOver: perCent) 
 		ifEmpty: [ #() ]
@@ -50,7 +71,7 @@ ProfilerModel >> stopProfiling [
 	self subclassResponsibility 
 ]
 
-{ #category : #accessing }
+{ #category : #private }
 ProfilerModel >> tallyRoot [
 
 	^ profiler tallyRoot asTallyModel

@@ -27,7 +27,14 @@ ProfilerResultsPresenter class >> withViewModel: aProfilerViewModel [
 		yourself
 ]
 
-{ #category : #'results display' }
+{ #category : #private }
+ProfilerResultsPresenter >> collapsePath: aPath [
+	treeTable
+		collapsePath: aPath;
+		selectPath: aPath
+]
+
+{ #category : #private }
 ProfilerResultsPresenter >> expandNodesOver: aNumber [
 
 	| thresholdPercentage |
@@ -39,16 +46,33 @@ ProfilerResultsPresenter >> expandNodesOver: aNumber [
 	treeTable refresh
 ]
 
-{ #category : #'filtering nodes' }
+{ #category : #private }
+ProfilerResultsPresenter >> expandPath: aPath [
+	treeTable
+		expandPath: aPath;
+		selectPath: aPath
+]
+
+{ #category : #'event handling' }
+ProfilerResultsPresenter >> handleArrowLeft [
+
+	self collapsePath: treeTable selection selectedPath
+]
+
+{ #category : #'event handling' }
+ProfilerResultsPresenter >> handleArrowRight [
+
+	self expandPath: treeTable selection selectedPath
+]
+
+{ #category : #private }
 ProfilerResultsPresenter >> hideNodesUnder: aNumber [ 
-	treeTable roots: (self viewModel rootTallyItemsOver: aNumber).
-	treeTable refresh
+	viewModel hideNodesUnder: aNumber.
+	self updateResults
 ]
 
 { #category : #initialization }
 ProfilerResultsPresenter >> initializeActions [
-
-	searchInput whenTextChangedDo: [ self error: 'implement me' ].
 
 	treeTable whenSelectedItemChangedDo: [ :item | 
 		item
@@ -65,12 +89,19 @@ ProfilerResultsPresenter >> initializeActions [
 					ifTrue: [ browseButton disable ]
 					ifFalse: [ browseButton enable ] ] ].
 
-	browseButton action: [ treeTable selectedItem tallyObject method browse ].
+	browseButton action: [ 
+		treeTable selectedItem tallyObject method browse ].
 
 	thresholdExpandInput eventHandler
 		whenFocusLostDo: [ 
-			thresholdExpandInput number isZero ifTrue: [ thresholdExpandInput number: 0.0 ] ];
-		whenFocusReceivedDo: [ thresholdExpandInput selectAll ]
+			thresholdExpandInput number isZero ifTrue: [ 
+					thresholdExpandInput number: 0.0 ] ];
+		whenFocusReceivedDo: [ thresholdExpandInput selectAll ];
+		whenMouseDownDo: [ :evt | thresholdExpandInput selectAll ].
+
+	thresholdFilterInput eventHandler
+		whenFocusReceivedDo: [ thresholdFilterInput selectAll ];
+		whenMouseDownDo: [ :evt | thresholdFilterInput selectAll ]
 ]
 
 { #category : #initialization }
@@ -78,7 +109,6 @@ ProfilerResultsPresenter >> initializeLayout [
 
 	self layout: (SpBoxLayout newTopToBottom
 			 add: summaryText height: self class toolbarHeight;
-			 add: searchInput height: self class toolbarHeight;
 			 add: navigationBar height: self class toolbarHeight;
 			 add: treeTable;
 			 add: self newResultsConfigurationPresenter
@@ -94,11 +124,7 @@ ProfilerResultsPresenter >> initializePresenters [
 
 	summaryText := self newLabel label: 'Reporting '.
 
-	searchInput := self newTextInput
-		               placeholder: 'Search selector in results';
-		               autoAccept: true.
-
-	navigationBar := self newToolbar addItem:
+		navigationBar := self newToolbar addItem:
 		                 (SpToolbarButtonPresenter new
 			                  label: 'Root';
 			                  help: 'Root of the execution tree';
@@ -133,9 +159,9 @@ ProfilerResultsPresenter >> newResultsConfigurationPresenter [
 		                help: 'Results visualization mode';
 		                items: viewModel treeVisualizationItems;
 		                display: [ :assoc | assoc key ];
-		                selectItem: viewModel defaultTreeVisualizationItem;
 		                yourself.
-
+	self showLeavesOnly: viewModel showLeavesOnly.
+	
 	thresholdExpandInput := self newNumberInput
 		                        beFloat;
 		                        help:
@@ -145,7 +171,7 @@ ProfilerResultsPresenter >> newResultsConfigurationPresenter [
 		                        climbRate: 0.5;
 		                        minimum: 0;
 		                        maximum: 100;
-		                        number: 0.0;
+		                        number: 0;
 		                        yourself.
 	thresholdFilterInput := self newNumberInput
 		                        beFloat;
@@ -156,7 +182,7 @@ ProfilerResultsPresenter >> newResultsConfigurationPresenter [
 		                        climbRate: 0.5;
 		                        minimum: 0;
 		                        maximum: 100;
-		                        number: 100.0;
+		                        number: viewModel showNodeThreshold;
 		                        yourself.
 
 	applyCustomExpandButton := self newButton
@@ -179,23 +205,14 @@ ProfilerResultsPresenter >> newResultsConfigurationPresenter [
 
 	expandAllButton action: [ treeTable expandAll ].
 
-	applyCustomExpandButton action: [ self expandNodesOver: thresholdExpandInput number " onErrorDo: [ :e | 
-		                       self
-			                       warning: 'Invalid number'
-			                       for: self thresholdExpandInput.
-		                       ^ self ]" ].
+	applyCustomExpandButton action: [ 
+		self expandNodesOver: thresholdExpandInput number ].
 
 	filterNodesButton action: [ 
 		self hideNodesUnder: thresholdFilterInput number ].
 
 	treeDropList whenSelectedItemChangedDo: [ :item | 
-		| showLeavesOnly |
-		showLeavesOnly := item value.
-		viewModel showLeavesOnly: showLeavesOnly.
-		expandAllButton enabled: showLeavesOnly not.
-		collapseAllButton enabled: showLeavesOnly not.
-		applyCustomExpandButton enabled: showLeavesOnly not.
-		thresholdExpandInput enabled: showLeavesOnly not.
+		viewModel showLeavesOnly: item value.
 		self updateResults ].
 
 	"Layout"
@@ -207,8 +224,7 @@ ProfilerResultsPresenter >> newResultsConfigurationPresenter [
 				   add: treeDropList;
 				   add: expandAllButton width: 100;
 				   add: collapseAllButton width: 100;
-				   add: (self newLabel label: 'Expand nodes over:')
-				   width: 190;
+				   add: (self newLabel label: 'Expand nodes over:') width: 190;
 				   add: thresholdExpandInput width: 55;
 				   add: (self newLabel label: '%') width: 25;
 				   add: applyCustomExpandButton width: 100;
@@ -222,9 +238,14 @@ ProfilerResultsPresenter >> newResultsConfigurationPresenter [
 						    yourself)
 				   expand: false fill: true;
 				   add: thresholdFilterInput width: 55;
+				   add: (self newLabel
+						    label: '%';
+						    yourself)
+				   width: 25;
 				   add: filterNodesButton expand: false fill: false;
 				   yourself);
-		  yourself
+		  yourself.
+	
 ]
 
 { #category : #initialization }
@@ -241,6 +262,10 @@ ProfilerResultsPresenter >> newTreeTablePresenter [
 			  ((SpStringTableColumn title: 'Tally' evaluated: #tally)
 				   width: 200;
 				   yourself);
+		bindKeyCombination: Character arrowLeft asKeyCombination 
+			toAction: [ self handleArrowLeft ];
+		bindKeyCombination: Character arrowRight asKeyCombination 
+			toAction: [ self handleArrowRight ];
 		  yourself
 	"addColumn: (SpLinkTableColumn new
 				   title: 'Go';
@@ -251,13 +276,8 @@ ProfilerResultsPresenter >> newTreeTablePresenter [
 				   yourself);"
 ]
 
-{ #category : #accessing }
-ProfilerResultsPresenter >> searchInput [
-	^ searchInput 
-]
-
 { #category : #update }
-ProfilerResultsPresenter >> showDoItNode [
+ProfilerResultsPresenter >> selectDoItNode [
 
 	| selectorsPath |
 	selectorsPath := #( 'runBlockAndProfile:' 'ensure:' 'DoIt' ).
@@ -274,36 +294,27 @@ ProfilerResultsPresenter >> showDoItNode [
 			self inform: 'Impossible to display the profiled code because its execution time was too short' ]
 ]
 
+{ #category : #private }
+ProfilerResultsPresenter >> showLeavesOnly: aBoolean [
+
+	treeDropList selectItem:
+		(treeDropList items select: [ :item | item value = aBoolean ]) first.
+	viewModel showLeavesOnly: aBoolean
+]
+
 { #category : #subscription }
 ProfilerResultsPresenter >> subscribeOnProfilingAnnouncements [
 
 	viewModel announcer when: ProfilingFinishedAnnouncement do: [ 
 		self updateResults.
-		self showDoItNode ]
+		self selectDoItNode.
+		self updateSummaryText ]
 ]
 
 { #category : #accessing }
 ProfilerResultsPresenter >> summaryText [
 
 	^ summaryText
-]
-
-{ #category : #accessing }
-ProfilerResultsPresenter >> thresholdExpandInput [
-
-	^ thresholdExpandInput
-]
-
-{ #category : #accessing }
-ProfilerResultsPresenter >> treeDropList [
-
-	^ treeDropList
-]
-
-{ #category : #accessing }
-ProfilerResultsPresenter >> treeTable [
-
-	^ treeTable
 ]
 
 { #category : #subscription }
@@ -314,11 +325,16 @@ ProfilerResultsPresenter >> unsubscribeFromProfilingAnnouncements [
 
 { #category : #update }
 ProfilerResultsPresenter >> updateResults [
+	
+	treeTable roots: viewModel rootItems
+]
 
-	treeTable roots: viewModel rootItems.
+{ #category : #update }
+ProfilerResultsPresenter >> updateSummaryText [
+
 	summaryText label:
-		'Reporting - ', viewModel totalTally asString ,' tallies, ' , viewModel totalTime asString
-		, ' msec.'
+		'Reporting - ' , viewModel totalTally asString , ' tallies, '
+		, viewModel totalTime asString , ' msec.'
 ]
 
 { #category : #accessing }
