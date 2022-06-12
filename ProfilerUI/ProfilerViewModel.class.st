@@ -176,11 +176,3 @@ ProfilerViewModel >> totalTally [
 ProfilerViewModel >> totalTime [
 	^ profilerModel totalTime
 ]
-
-{ #category : #accessing }
-ProfilerViewModel >> treeVisualizationItems [
-
-	^ { 
-		  ('Full tree' -> false).
-		  ('Leaves only' -> true) }
-]

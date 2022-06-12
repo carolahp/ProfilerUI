@@ -5,16 +5,17 @@ Class {
 	#name : #ProfilerResultsPresenter,
 	#superclass : #SpPresenter,
 	#instVars : [
-		'searchInput',
 		'navigationBar',
-		'treeDropList',
 		'treeTable',
 		'summaryText',
 		'viewModel',
 		'codePresenter',
 		'browseButton',
-		'thresholdExpandInput',
-		'thresholdFilterInput'
+		'treeDropList',
+		'expandAllButton',
+		'collapseAllButton',
+		'thresholdFilterInput',
+		'thresholdExpandInput'
 	],
 	#category : #'ProfilerUI-View'
 }
@@ -32,6 +33,29 @@ ProfilerResultsPresenter >> collapsePath: aPath [
 	treeTable
 		collapsePath: aPath;
 		selectPath: aPath
+]
+
+{ #category : #initialization }
+ProfilerResultsPresenter >> configurationSectionLayout [
+
+	^ (SpBoxLayout newTopToBottom
+			 add: (self newLabel label: 'Configure results display');
+			 add: (SpBoxLayout newLeftToRight
+					  add: (treeDropList := self newTreeVisualizationDropList);
+					  add: (expandAllButton := self newButton label: 'Expand All') width: 100;
+					  add: (collapseAllButton := self newButton label: 'Collapse All') width: 100;
+					  yourself);
+			 add: (SpBoxLayout newLeftToRight
+					  add: (self newLabel label: 'Hide nodes under: ') width: 125;
+					  add: (thresholdFilterInput := self newThresholdFilterInput) width: 55;
+					  add: (self newLabel label: '%') width: 25;
+					  yourself);
+			 add: (SpBoxLayout newLeftToRight
+					  add: (self newLabel label: 'Expand nodes over: ') width: 125;
+					  add: (thresholdExpandInput := self newThresholdExpandInput) width: 55;
+					  add: (self newLabel label: '%') width: 25; 
+					  yourself);
+			  yourself)
 ]
 
 { #category : #private }
@@ -65,6 +89,24 @@ ProfilerResultsPresenter >> handleArrowRight [
 	self expandPath: treeTable selection selectedPath
 ]
 
+{ #category : #initialization }
+ProfilerResultsPresenter >> handleSelectionChange: item [
+
+	item
+		ifNil: [ 
+			codePresenter text: ''.
+			codePresenter beForMethod: nil.
+			browseButton disable ]
+		ifNotNil: [ 
+			| methodOrBlock |
+			browseButton enable.
+			methodOrBlock := item tallyObject method.
+			codePresenter text: methodOrBlock sourceCode.
+			codePresenter beForMethod: (methodOrBlock isCompiledBlock
+					 ifTrue: [ methodOrBlock method ]
+					 ifFalse: [ methodOrBlock ]) ]
+]
+
 { #category : #private }
 ProfilerResultsPresenter >> hideNodesUnder: aNumber [ 
 	viewModel hideNodesUnder: aNumber.
@@ -74,178 +116,102 @@ ProfilerResultsPresenter >> hideNodesUnder: aNumber [
 { #category : #initialization }
 ProfilerResultsPresenter >> initializeActions [
 
-	treeTable whenSelectedItemChangedDo: [ :item | 
-		item
-			ifNil: [ 
-				codePresenter text: ''.
-				codePresenter beForMethod: nil.
-				browseButton disable ]
-			ifNotNil: [ 
-				| methodOrBlock |
-				methodOrBlock := item tallyObject method.
-				codePresenter text: methodOrBlock sourceCode.
-				codePresenter beForMethod: methodOrBlock.
-				methodOrBlock isCompiledBlock
-					ifTrue: [ browseButton disable ]
-					ifFalse: [ browseButton enable ] ] ].
-
+	treeTable whenSelectedItemChangedDo: [ :item | self handleSelectionChange: item ].
+	"Code section actions"
 	browseButton action: [ 
 		treeTable selectedItem tallyObject method browse ].
+	
+	"Configuration section actions"
+	collapseAllButton action: [ treeTable collapseAll ].
 
-	thresholdExpandInput eventHandler
-		whenFocusLostDo: [ 
-			thresholdExpandInput number isZero ifTrue: [ 
-					thresholdExpandInput number: 0.0 ] ];
-		whenFocusReceivedDo: [ thresholdExpandInput selectAll ];
-		whenMouseDownDo: [ :evt | thresholdExpandInput selectAll ].
+	expandAllButton action: [ treeTable expandAll ].
 
-	thresholdFilterInput eventHandler
-		whenFocusReceivedDo: [ thresholdFilterInput selectAll ];
-		whenMouseDownDo: [ :evt | thresholdFilterInput selectAll ]
-]
-
-{ #category : #initialization }
-ProfilerResultsPresenter >> initializeLayout [
-
-	self layout: (SpBoxLayout newTopToBottom
-			 add: summaryText height: self class toolbarHeight;
-			 add: navigationBar height: self class toolbarHeight;
-			 add: treeTable;
-			 add: self newResultsConfigurationPresenter
-			 height: self class toolbarHeight * 3;
-			 add: codePresenter;
-			 add: (SpBoxLayout newLeftToRight addLast: browseButton)
-			 height: self class toolbarHeight;
-			 yourself)
+	thresholdExpandInput whenSubmitDo: [ :text |
+		self expandNodesOver: text asNumber ].
+	
+	thresholdFilterInput whenSubmitDo: [ :text | 
+		self hideNodesUnder: text asNumber ].	
+	
+	treeDropList whenSelectedItemChangedDo: [ :item | 
+		viewModel showLeavesOnly: item value.
+		self updateResults ]
 ]
 
 { #category : #initialization }
 ProfilerResultsPresenter >> initializePresenters [
 
-	summaryText := self newLabel label: 'Reporting '.
+	| h |
+	h := self class toolbarHeight.
 
-		navigationBar := self newToolbar addItem:
-		                 (SpToolbarButtonPresenter new
-			                  label: 'Root';
-			                  help: 'Root of the execution tree';
-			                  action: [ self inform: 'Root!' ]).
-	treeTable := self newTreeTablePresenter.
+	self layout: (SpBoxLayout newTopToBottom
+			 add: (summaryText := self newLabel label: 'Reporting ') height: h;
+			 add: (navigationBar := self newNavigationBar) height: h;
+			 add: (treeTable := self newTreeTablePresenter);
+			 add: self configurationSectionLayout height: h * 3;
+			 add: (codePresenter := self newCode beNotEditable);
+			 add: (SpBoxLayout newLeftToRight addLast:
+						  (browseButton := self newBrowseButton))
+			 height: h;
+			 yourself).
 
-	codePresenter := self newCode beNotEditable.
-
-	browseButton := self newButton
-		                icon: (self iconNamed: #glamorousBrowse);
-		                label: 'Browse';
-		                disable;
-		                yourself.
-
-	self initializeLayout.
 	self subscribeOnProfilingAnnouncements.
 	self initializeActions
 ]
 
-{ #category : #accessing }
-ProfilerResultsPresenter >> navigationBar [
+{ #category : #initialization }
+ProfilerResultsPresenter >> menu [
 
-	^ navigationBar
+	^ self newMenu
+		  title: 'Node menu';
+		  addGroup: [ :aGroup | 
+			  aGroup addItem: [ :anItem | 
+					  anItem
+						  name: 'Print in transcript';
+						  shortcut: $p meta;
+						  description: 'Print the selected class on Transcript';
+						  action: [ treeTable selectedItem traceCr ] ] ]
 ]
 
 { #category : #initialization }
-ProfilerResultsPresenter >> newResultsConfigurationPresenter [
+ProfilerResultsPresenter >> newBrowseButton [
 
-	| applyCustomExpandButton collapseAllButton expandAllButton filterNodesButton |
-	"Presenters"
-	treeDropList := self newDropList
-		                help: 'Results visualization mode';
-		                items: viewModel treeVisualizationItems;
-		                display: [ :assoc | assoc key ];
-		                yourself.
-	self showLeavesOnly: viewModel showLeavesOnly.
-	
-	thresholdExpandInput := self newNumberInput
-		                        beFloat;
-		                        help:
-			                        'Only nodes with a percentage of time greater than this threshold will be expanded';
-		                        autoAccept: true;
-		                        digits: 1;
-		                        climbRate: 0.5;
-		                        minimum: 0;
-		                        maximum: 100;
-		                        number: 0;
-		                        yourself.
-	thresholdFilterInput := self newNumberInput
-		                        beFloat;
-		                        help:
-			                        'Only nodes with a percentage of time greater than this threshold will be shown';
-		                        autoAccept: true;
-		                        digits: 1;
-		                        climbRate: 0.5;
-		                        minimum: 0;
-		                        maximum: 100;
-		                        number: viewModel showNodeThreshold;
-		                        yourself.
+	^ self newButton
+		  icon: (self iconNamed: #glamorousBrowse);
+		  label: 'Browse';
+		  disable;
+		  yourself
+]
 
-	applyCustomExpandButton := self newButton
-		                           label: 'Apply';
-		                           yourself.
-	filterNodesButton := self newButton
-		                     label: 'Filter';
-		                     yourself.
+{ #category : #initialization }
+ProfilerResultsPresenter >> newNavigationBar [
 
-	expandAllButton := self newButton
-		                   label: 'Expand All';
-		                   yourself.
+	^ self newToolbar addItem: (SpToolbarButtonPresenter new
+			   label: 'Root';
+			   help: 'Root of the execution tree';
+			   action: [ self inform: 'Root!' ])
+]
 
-	collapseAllButton := self newButton
-		                     label: 'Collapse All';
-		                     yourself.
+{ #category : #initialization }
+ProfilerResultsPresenter >> newProfilerNumberInput [
+	^ self instantiate: ProfilerNumberInput 
+]
 
-	"Actions"
-	collapseAllButton action: [ treeTable collapseAll ].
+{ #category : #initialization }
+ProfilerResultsPresenter >> newThresholdExpandInput [
 
-	expandAllButton action: [ treeTable expandAll ].
+	^ self newProfilerNumberInput
+		  help: 'Only nodes with a percentage of time greater than this threshold will be expanded';
+		  number: 0;
+		  yourself
+]
 
-	applyCustomExpandButton action: [ 
-		self expandNodesOver: thresholdExpandInput number ].
+{ #category : #initialization }
+ProfilerResultsPresenter >> newThresholdFilterInput [
 
-	filterNodesButton action: [ 
-		self hideNodesUnder: thresholdFilterInput number ].
-
-	treeDropList whenSelectedItemChangedDo: [ :item | 
-		viewModel showLeavesOnly: item value.
-		self updateResults ].
-
-	"Layout"
-	^ SpBoxLayout newTopToBottom
-		  add: (self newLabel
-				   label: 'Configure results display';
-				   yourself);
-		  add: (SpBoxLayout newLeftToRight
-				   add: treeDropList;
-				   add: expandAllButton width: 100;
-				   add: collapseAllButton width: 100;
-				   add: (self newLabel label: 'Expand nodes over:') width: 190;
-				   add: thresholdExpandInput width: 55;
-				   add: (self newLabel label: '%') width: 25;
-				   add: applyCustomExpandButton width: 100;
-				   yourself);
-		  add: (self newLabel
-				   label: 'Filter results';
-				   yourself);
-		  add: (SpBoxLayout newLeftToRight
-				   add: (self newLabel
-						    label: 'Hide nodes under:';
-						    yourself)
-				   expand: false fill: true;
-				   add: thresholdFilterInput width: 55;
-				   add: (self newLabel
-						    label: '%';
-						    yourself)
-				   width: 25;
-				   add: filterNodesButton expand: false fill: false;
-				   yourself);
-		  yourself.
-	
+	^ self newProfilerNumberInput
+		  help: 'Only nodes with a percentage of time greater than this threshold will be shown';
+		  number: viewModel showNodeThreshold;
+		  yourself
 ]
 
 { #category : #initialization }
@@ -262,18 +228,36 @@ ProfilerResultsPresenter >> newTreeTablePresenter [
 			  ((SpStringTableColumn title: 'Tally' evaluated: #tally)
 				   width: 200;
 				   yourself);
-		bindKeyCombination: Character arrowLeft asKeyCombination 
-			toAction: [ self handleArrowLeft ];
-		bindKeyCombination: Character arrowRight asKeyCombination 
-			toAction: [ self handleArrowRight ];
-		  yourself
-	"addColumn: (SpLinkTableColumn new
+		  bindKeyCombination: Character arrowLeft asKeyCombination
+		  toAction: [ self handleArrowLeft ];
+		  bindKeyCombination: Character arrowRight asKeyCombination
+		  toAction: [ self handleArrowRight ];
+		  contextMenu: self menu;
+		  "addColumn: (SpLinkTableColumn new
 				   title: 'Go';
 				   width: 70;
 				   evaluated: [ :aNode | '->' ];
 				   action: [ :aNode |  attributeTable toggleFilter: aNode variableTag. owner updateHeaderBar. ];
 				   sortFunction: #variableTag ascending;
 				   yourself);"
+			  yourself
+]
+
+{ #category : #initialization }
+ProfilerResultsPresenter >> newTreeVisualizationDropList [
+	| items |
+	items := { 
+		         ('Full tree' -> false).
+		         ('Leaves only' -> true) }.
+
+	^ self newDropList
+		                help: 'Results visualization mode';
+		                items: items;
+		                selectItem: (viewModel showLeavesOnly
+				                 ifTrue: [ items at: 2 ]
+				                 ifFalse: [ items at: 1 ]);
+		                display: [ :assoc | assoc key ];
+		                yourself.
 ]
 
 { #category : #update }
@@ -294,14 +278,6 @@ ProfilerResultsPresenter >> selectDoItNode [
 			self inform: 'Impossible to display the profiled code because its execution time was too short' ]
 ]
 
-{ #category : #private }
-ProfilerResultsPresenter >> showLeavesOnly: aBoolean [
-
-	treeDropList selectItem:
-		(treeDropList items select: [ :item | item value = aBoolean ]) first.
-	viewModel showLeavesOnly: aBoolean
-]
-
 { #category : #subscription }
 ProfilerResultsPresenter >> subscribeOnProfilingAnnouncements [
 
@@ -309,12 +285,6 @@ ProfilerResultsPresenter >> subscribeOnProfilingAnnouncements [
 		self updateResults.
 		self selectDoItNode.
 		self updateSummaryText ]
-]
-
-{ #category : #accessing }
-ProfilerResultsPresenter >> summaryText [
-
-	^ summaryText
 ]
 
 { #category : #subscription }
