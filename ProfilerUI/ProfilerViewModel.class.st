@@ -109,13 +109,13 @@ ProfilerViewModel >> rootItems [
 		ifFalse: [ self rootTallyItemsOver: showNodeThreshold ]
 ]
 
-{ #category : #'accessing roots' }
+{ #category : #'accessing nodes' }
 ProfilerViewModel >> rootTallyItems [
 
 	^ self rootTallyItemsOver: 0
 ]
 
-{ #category : #'accessing roots' }
+{ #category : #'accessing nodes' }
 ProfilerViewModel >> rootTallyItemsOver: anInteger [ 
 
 	^ profilerModel rootTallyItemsOver: anInteger
@@ -172,7 +172,7 @@ ProfilerViewModel >> totalTally [
 	^ profilerModel totalTally  
 ]
 
-{ #category : #'accessing roots' }
+{ #category : #accessing }
 ProfilerViewModel >> totalTime [
 	^ profilerModel totalTime
 ]

@@ -29,6 +29,28 @@ ProfilerResultsPresenter class >> withViewModel: aProfilerViewModel [
 ]
 
 { #category : #private }
+ProfilerResultsPresenter >> addNavigationItem: anItem [
+
+	navigationBar addItem: (ProfilerToolbarButtonPresenter new
+			 object: anItem;
+			 label: anItem methodName;
+			 help: 'Display ' , anItem methodName , ' as root';
+			 action: [ 
+				 | toKeep item i |
+				 toKeep := #(  ) asOrderedCollection.
+				 viewModel profilerModel tallyRoot: anItem tallyObject.
+				 i := 1.
+				 [ 
+					 item := navigationBar items at: i.
+					 toKeep add: item.
+					 i := i + 1.
+					 item isNotNil and: [ item object = anItem ] ] whileFalse.
+				 navigationBar removeAllItems.
+				 toKeep do: [ :itm | navigationBar addItem: itm ].
+				 self updateResults ])
+]
+
+{ #category : #private }
 ProfilerResultsPresenter >> collapsePath: aPath [
 	treeTable
 		collapsePath: aPath;
@@ -145,7 +167,7 @@ ProfilerResultsPresenter >> initializePresenters [
 
 	self layout: (SpBoxLayout newTopToBottom
 			 add: (summaryText := self newLabel label: 'Reporting ') height: h;
-			 add: (navigationBar := self newNavigationBar) height: h;
+			 add: (navigationBar := self newToolbar) height: h;
 			 add: (treeTable := self newTreeTablePresenter);
 			 add: self configurationSectionLayout height: h * 3;
 			 add: (codePresenter := self newCode beNotEditable);
@@ -166,10 +188,21 @@ ProfilerResultsPresenter >> menu [
 		  addGroup: [ :aGroup | 
 			  aGroup addItem: [ :anItem | 
 					  anItem
-						  name: 'Print in transcript';
-						  shortcut: $p meta;
-						  description: 'Print the selected class on Transcript';
-						  action: [ treeTable selectedItem traceCr ] ] ]
+						  name: 'Go into';
+						  shortcut: $g meta;
+						  description: 'Make node the root of the tree';
+						  action: [ treeTable selectedItem traceCr.
+							viewModel profilerModel tallyRoot: treeTable selectedItem tallyObject.
+							self addNavigationItem: treeTable selectedItem.
+							
+							self updateResults
+							] ];
+			  addItem: [ :anItem | 
+					  anItem
+						  name: 'Inspect';
+						  shortcut: $i meta;
+						  description: 'Inspect node';
+						  action: [ treeTable selectedItem inspect ] ] ]
 ]
 
 { #category : #initialization }
@@ -180,15 +213,6 @@ ProfilerResultsPresenter >> newBrowseButton [
 		  label: 'Browse';
 		  disable;
 		  yourself
-]
-
-{ #category : #initialization }
-ProfilerResultsPresenter >> newNavigationBar [
-
-	^ self newToolbar addItem: (SpToolbarButtonPresenter new
-			   label: 'Root';
-			   help: 'Root of the execution tree';
-			   action: [ self inform: 'Root!' ])
 ]
 
 { #category : #initialization }
@@ -284,7 +308,8 @@ ProfilerResultsPresenter >> subscribeOnProfilingAnnouncements [
 	viewModel announcer when: ProfilingFinishedAnnouncement do: [ 
 		self updateResults.
 		self selectDoItNode.
-		self updateSummaryText ]
+		self updateSummaryText.
+		self addNavigationItem: viewModel profilerModel tallyRoot ]
 ]
 
 { #category : #subscription }

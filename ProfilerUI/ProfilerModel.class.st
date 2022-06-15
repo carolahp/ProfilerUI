@@ -6,7 +6,8 @@ Class {
 	#superclass : #Object,
 	#instVars : [
 		'profiler',
-		'threshold'
+		'threshold',
+		'tallyRoot'
 	],
 	#category : #'ProfilerUI-Model'
 }
@@ -74,9 +75,18 @@ ProfilerModel >> stopProfiling [
 { #category : #private }
 ProfilerModel >> tallyRoot [
 
-	^ profiler tallyRoot asTallyModel
-		  profilerModel: self;
-		  yourself
+	^ tallyRoot ifNil: [ 
+		  tallyRoot := profiler tallyRoot asTallyModel
+			               profilerModel: self;
+			               yourself ]
+]
+
+{ #category : #private }
+ProfilerModel >> tallyRoot: aTallyObject [
+
+	^ tallyRoot := aTallyObject asTallyModel
+			               profilerModel: self;
+			               yourself 
 ]
 
 { #category : #accessing }

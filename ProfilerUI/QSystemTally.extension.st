@@ -9,5 +9,5 @@ QSystemTally >> asTallyModel [
 
 { #category : #'*ProfilerUI' }
 QSystemTally >> methodClassName [
-	^ class name
+	^ class ifNil: [ '' ] ifNotNil: [ class name ] 
 ]
