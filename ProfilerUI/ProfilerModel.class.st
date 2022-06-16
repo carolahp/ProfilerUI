@@ -58,8 +58,7 @@ ProfilerModel >> rootTallyItems [
 ProfilerModel >> rootTallyItemsOver: perCent [
 	^ (self tallyRoot sonsOver: perCent) 
 		ifEmpty: [ #() ]
-		ifNotEmpty: [ :sons | (sons first sonsOver: perCent)
-		  asOrderedCollection sort reverse ] 
+		ifNotEmpty: [:sons | sons asOrderedCollection sort reverse ] 
 ]
 
 { #category : #profiling }

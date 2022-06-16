@@ -29,25 +29,19 @@ ProfilerResultsPresenter class >> withViewModel: aProfilerViewModel [
 ]
 
 { #category : #private }
-ProfilerResultsPresenter >> addNavigationItem: anItem [
-
-	navigationBar addItem: (ProfilerToolbarButtonPresenter new
+ProfilerResultsPresenter >> addToolbarItem: anItem [
+	| navItem |
+	navItem := ProfilerToolbarButtonPresenter new.
+	navItem
 			 object: anItem;
 			 label: anItem methodName;
 			 help: 'Display ' , anItem methodName , ' as root';
 			 action: [ 
-				 | toKeep item i |
-				 toKeep := #(  ) asOrderedCollection.
-				 viewModel profilerModel tallyRoot: anItem tallyObject.
-				 i := 1.
-				 [ 
-					 item := navigationBar items at: i.
-					 toKeep add: item.
-					 i := i + 1.
-					 item isNotNil and: [ item object = anItem ] ] whileFalse.
-				 navigationBar removeAllItems.
-				 toKeep do: [ :itm | navigationBar addItem: itm ].
-				 self updateResults ])
+				 self goInto: anItem.
+				 self selectToolbarItem: navItem.
+				 self updateResults ].
+	navigationBar addItem: navItem.
+	^ navItem
 ]
 
 { #category : #private }
@@ -99,6 +93,12 @@ ProfilerResultsPresenter >> expandPath: aPath [
 		selectPath: aPath
 ]
 
+{ #category : #private }
+ProfilerResultsPresenter >> goInto: anItem [
+
+	viewModel profilerModel tallyRoot: anItem tallyObject
+]
+
 { #category : #'event handling' }
 ProfilerResultsPresenter >> handleArrowLeft [
 
@@ -111,7 +111,7 @@ ProfilerResultsPresenter >> handleArrowRight [
 	self expandPath: treeTable selection selectedPath
 ]
 
-{ #category : #initialization }
+{ #category : #'event handling' }
 ProfilerResultsPresenter >> handleSelectionChange: item [
 
 	item
@@ -167,7 +167,7 @@ ProfilerResultsPresenter >> initializePresenters [
 
 	self layout: (SpBoxLayout newTopToBottom
 			 add: (summaryText := self newLabel label: 'Reporting ') height: h;
-			 add: (navigationBar := self newToolbar) height: h;
+			 add: (navigationBar := self newProfilerToolbar) height: h;
 			 add: (treeTable := self newTreeTablePresenter);
 			 add: self configurationSectionLayout height: h * 3;
 			 add: (codePresenter := self newCode beNotEditable);
@@ -191,10 +191,11 @@ ProfilerResultsPresenter >> menu [
 						  name: 'Go into';
 						  shortcut: $g meta;
 						  description: 'Make node the root of the tree';
-						  action: [ treeTable selectedItem traceCr.
-							viewModel profilerModel tallyRoot: treeTable selectedItem tallyObject.
-							self addNavigationItem: treeTable selectedItem.
-							
+						  action: [ | navItem | 
+							self goInto: treeTable selectedItem.
+							self removeToolbarItemsAfter: navigationBar selectedItem.
+							navItem := self addToolbarItem: treeTable selectedItem.
+							self selectToolbarItem: navItem.
 							self updateResults
 							] ];
 			  addItem: [ :anItem | 
@@ -218,6 +219,12 @@ ProfilerResultsPresenter >> newBrowseButton [
 { #category : #initialization }
 ProfilerResultsPresenter >> newProfilerNumberInput [
 	^ self instantiate: ProfilerNumberInput 
+]
+
+{ #category : #initialization }
+ProfilerResultsPresenter >> newProfilerToolbar [
+
+	^ self instantiate: ProfilerToolbarPresenter 
 ]
 
 { #category : #initialization }
@@ -284,11 +291,25 @@ ProfilerResultsPresenter >> newTreeVisualizationDropList [
 		                yourself.
 ]
 
+{ #category : #private }
+ProfilerResultsPresenter >> removeToolbarItemsAfter: anItem [
+	| toKeep item i |
+	toKeep := #() asOrderedCollection.
+	i := 1.
+	[ 
+	item := navigationBar items at: i.
+	toKeep add: item.
+	i := i + 1.
+	item isNotNil and: [ item = anItem ] ] whileFalse.
+	navigationBar removeAllItems.
+	toKeep do: [ :itm | navigationBar addItem: itm ]
+]
+
 { #category : #update }
 ProfilerResultsPresenter >> selectDoItNode [
 
 	| selectorsPath |
-	selectorsPath := #( 'runBlockAndProfile:' 'ensure:' 'DoIt' ).
+	selectorsPath := #( 'newProcess' 'runBlockAndProfile:' 'ensure:' 'DoIt' ).
 	treeTable expandAllSuchThat: [ :item | 
 		(selectorsPath indexOf: item tallyObject method selector) > 0 ].
 
@@ -302,14 +323,29 @@ ProfilerResultsPresenter >> selectDoItNode [
 			self inform: 'Impossible to display the profiled code because its execution time was too short' ]
 ]
 
+{ #category : #private }
+ProfilerResultsPresenter >> selectToolbarItem: anItem [
+	| items | 
+	navigationBar items do: [:itm | itm badge: nil ].
+	anItem badge: ' '.
+	items := navigationBar items.
+	"ugly hack to force the ui refresh"
+	navigationBar removeAllItems.
+	items do: [ :itm | navigationBar addItem: itm ].
+	navigationBar selectedItem: anItem.
+	
+]
+
 { #category : #subscription }
 ProfilerResultsPresenter >> subscribeOnProfilingAnnouncements [
 
+	| navItem |
 	viewModel announcer when: ProfilingFinishedAnnouncement do: [ 
 		self updateResults.
 		self selectDoItNode.
 		self updateSummaryText.
-		self addNavigationItem: viewModel profilerModel tallyRoot ]
+		navItem := self addToolbarItem: viewModel profilerModel tallyRoot.
+		self selectToolbarItem: navItem ]
 ]
 
 { #category : #subscription }
