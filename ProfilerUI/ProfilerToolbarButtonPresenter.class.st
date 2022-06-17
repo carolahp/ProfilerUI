@@ -5,10 +5,23 @@ Class {
 	#name : #ProfilerToolbarButtonPresenter,
 	#superclass : #SpToolbarButtonPresenter,
 	#instVars : [
-		'object'
+		'object',
+		'node'
 	],
 	#category : #'ProfilerUI-View'
 }
+
+{ #category : #accessing }
+ProfilerToolbarButtonPresenter >> node [
+
+	^ node
+]
+
+{ #category : #accessing }
+ProfilerToolbarButtonPresenter >> node: anObject [
+
+	node := anObject
+]
 
 { #category : #accessing }
 ProfilerToolbarButtonPresenter >> object [

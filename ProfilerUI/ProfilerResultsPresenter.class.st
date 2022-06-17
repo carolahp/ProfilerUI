@@ -30,16 +30,22 @@ ProfilerResultsPresenter class >> withViewModel: aProfilerViewModel [
 
 { #category : #private }
 ProfilerResultsPresenter >> addToolbarItem: anItem [
+
 	| navItem |
 	navItem := ProfilerToolbarButtonPresenter new.
 	navItem
-			 object: anItem;
-			 label: anItem methodName;
-			 help: 'Display ' , anItem methodName , ' as root';
-			 action: [ 
-				 self goInto: anItem.
-				 self selectToolbarItem: navItem.
-				 self updateResults ].
+		object: anItem;
+		label: anItem methodName;
+		help: 'Display ' , anItem methodName , ' as root';
+		action: [ 
+			self goInto: anItem.
+			self selectToolbarItem: navItem.
+			self updateResults.
+			navItem node ifNotNil: [ :node | treeTable selectPath: node scrollToSelection: true ]
+			 ].
+
+	navigationBar items ifNotEmpty: [ :items | 
+		items last node: treeTable selectionMode selectedPath ].
 	navigationBar addItem: navItem.
 	^ navItem
 ]
@@ -126,7 +132,8 @@ ProfilerResultsPresenter >> handleSelectionChange: item [
 			codePresenter text: methodOrBlock sourceCode.
 			codePresenter beForMethod: (methodOrBlock isCompiledBlock
 					 ifTrue: [ methodOrBlock method ]
-					 ifFalse: [ methodOrBlock ]) ]
+					 ifFalse: [ methodOrBlock ]).
+			navigationBar selectedItem ifNotNil: [ :btn | btn node: treeTable selectionMode selectedPath ] ]
 ]
 
 { #category : #private }
@@ -320,14 +327,15 @@ ProfilerResultsPresenter >> selectDoItNode [
 		item data tallyObject method selector = selector ] ]
 		on: SubscriptOutOfBounds
 		do: [ "this occurs when the profiled function took too little time" 
-			self inform: 'Impossible to display the profiled code because its execution time was too short' ]
+			self inform: 'Impossible to display the profiled code. Probably execution time was too short' ]
 ]
 
 { #category : #private }
 ProfilerResultsPresenter >> selectToolbarItem: anItem [
 	| items | 
-	navigationBar items do: [:itm | itm badge: nil ].
-	anItem badge: ' '.
+	navigationBar items do: [:itm | itm icon: nil ].
+	anItem icon: (self iconNamed: 'windowMenu').
+	
 	items := navigationBar items.
 	"ugly hack to force the ui refresh"
 	navigationBar removeAllItems.
@@ -344,6 +352,7 @@ ProfilerResultsPresenter >> subscribeOnProfilingAnnouncements [
 		self updateResults.
 		self selectDoItNode.
 		self updateSummaryText.
+		navigationBar removeAllItems.
 		navItem := self addToolbarItem: viewModel profilerModel tallyRoot.
 		self selectToolbarItem: navItem ]
 ]
