@@ -64,7 +64,7 @@ TallyModel >> profilerModel: anObject [
 { #category : #querying }
 TallyModel >> reportString [
 
-	^ (self weight printShowingDecimalPlaces: 1) , '% {'
+	^ (self weightToRoot printShowingDecimalPlaces: 1) , '% {'
 	  , (self time printShowingDecimalPlaces: 1) , 'ms} ' , self methodName
 ]
 
@@ -108,5 +108,11 @@ TallyModel >> time [
 
 { #category : #accessing }
 TallyModel >> weight [ 
-	^ self tally asFloat / profilerModel total * 100.0
+	^ self tally asFloat / profilerModel totalTally * 100.0
+]
+
+{ #category : #accessing }
+TallyModel >> weightToRoot [  
+
+	^ self tally asFloat / profilerModel tallyRoot tally * 100.0
 ]

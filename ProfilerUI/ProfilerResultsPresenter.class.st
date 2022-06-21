@@ -51,6 +51,11 @@ ProfilerResultsPresenter >> addToolbarItem: anItem [
 ]
 
 { #category : #private }
+ProfilerResultsPresenter >> browseSelectedItem [ 
+	treeTable selectedItem tallyObject method browse
+]
+
+{ #category : #private }
 ProfilerResultsPresenter >> collapsePath: aPath [
 	treeTable
 		collapsePath: aPath;
@@ -97,6 +102,17 @@ ProfilerResultsPresenter >> expandPath: aPath [
 	treeTable
 		expandPath: aPath;
 		selectPath: aPath
+]
+
+{ #category : #private }
+ProfilerResultsPresenter >> goInto [
+
+	| navItem |
+	self goInto: treeTable selectedItem.
+	self removeToolbarItemsAfter: navigationBar selectedItem.
+	navItem := self addToolbarItem: treeTable selectedItem.
+	self selectToolbarItem: navItem.
+	self updateResults
 ]
 
 { #category : #private }
@@ -147,8 +163,7 @@ ProfilerResultsPresenter >> initializeActions [
 
 	treeTable whenSelectedItemChangedDo: [ :item | self handleSelectionChange: item ].
 	"Code section actions"
-	browseButton action: [ 
-		treeTable selectedItem tallyObject method browse ].
+	browseButton action: [ self browseSelectedItem ].
 	
 	"Configuration section actions"
 	collapseAllButton action: [ treeTable collapseAll ].
@@ -198,19 +213,13 @@ ProfilerResultsPresenter >> menu [
 						  name: 'Go into';
 						  shortcut: $g meta;
 						  description: 'Make node the root of the tree';
-						  action: [ | navItem | 
-							self goInto: treeTable selectedItem.
-							self removeToolbarItemsAfter: navigationBar selectedItem.
-							navItem := self addToolbarItem: treeTable selectedItem.
-							self selectToolbarItem: navItem.
-							self updateResults
-							] ];
+						  action: [ self goInto	] ];
 			  addItem: [ :anItem | 
 					  anItem
-						  name: 'Inspect';
-						  shortcut: $i meta;
-						  description: 'Inspect node';
-						  action: [ treeTable selectedItem inspect ] ] ]
+						  name: 'Browse';
+						  shortcut: $b meta;
+						  description: 'Browse code in Calypso';
+						  action: [ self browseSelectedItem ] ] ]
 ]
 
 { #category : #initialization }
@@ -261,11 +270,21 @@ ProfilerResultsPresenter >> newTreeTablePresenter [
 				    evaluated: [ :node | node reportString ])
 				   width: 500;
 				   yourself);
-		  children: [ :node | node sons asOrderedCollection sort reverse ];
 		  addColumn:
 			  ((SpStringTableColumn title: 'Tally' evaluated: #tally)
 				   width: 200;
 				   yourself);
+		  "addColumn:
+			  (SpLinkTableColumn new
+					title: 'Go into';
+					width: 70;
+					evaluated: [ :node | '->' ];
+					action: [ :node | treeTable selectItem: node. self goInto  ];
+					yourself);"
+		  children: [ :node | | perCent |
+				perCent := thresholdFilterInput text asNumber.
+				viewModel hideNodesUnder: perCent. 
+				(node sonsOver: perCent) asOrderedCollection sort reverse ];
 		  bindKeyCombination: Character arrowLeft asKeyCombination
 		  toAction: [ self handleArrowLeft ];
 		  bindKeyCombination: Character arrowRight asKeyCombination
@@ -312,10 +331,11 @@ ProfilerResultsPresenter >> removeToolbarItemsAfter: anItem [
 	toKeep do: [ :itm | navigationBar addItem: itm ]
 ]
 
-{ #category : #update }
+{ #category : #private }
 ProfilerResultsPresenter >> selectDoItNode [
 
 	| selectorsPath |
+	
 	selectorsPath := #( 'newProcess' 'runBlockAndProfile:' 'ensure:' 'DoIt' ).
 	treeTable expandAllSuchThat: [ :item | 
 		(selectorsPath indexOf: item tallyObject method selector) > 0 ].
@@ -350,7 +370,7 @@ ProfilerResultsPresenter >> subscribeOnProfilingAnnouncements [
 	| navItem |
 	viewModel announcer when: ProfilingFinishedAnnouncement do: [ 
 		self updateResults.
-		self selectDoItNode.
+		viewModel showLeavesOnly ifFalse: [self selectDoItNode].
 		self updateSummaryText.
 		navigationBar removeAllItems.
 		navItem := self addToolbarItem: viewModel profilerModel tallyRoot.

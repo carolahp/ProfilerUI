@@ -109,7 +109,7 @@ ProfilerModel >> total [
 
 { #category : #accessing }
 ProfilerModel >> totalTally [
-	^ profiler totalTally
+	^ profiler tallyRoot tally
 ]
 
 { #category : #accessing }

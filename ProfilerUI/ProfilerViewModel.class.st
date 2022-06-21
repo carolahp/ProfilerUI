@@ -105,8 +105,8 @@ ProfilerViewModel >> profilerThreshold: aFloat [
 ProfilerViewModel >> rootItems [
 
 	^ showLeavesOnly
-		ifTrue: [ self leaveItemsOver: showNodeThreshold ]
-		ifFalse: [ self rootTallyItemsOver: showNodeThreshold ]
+		  ifTrue: [ self leaveItemsOver: showNodeThreshold ]
+		  ifFalse: [ self rootTallyItemsOver: showNodeThreshold ]
 ]
 
 { #category : #'accessing nodes' }
