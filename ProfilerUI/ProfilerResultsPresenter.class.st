@@ -208,15 +208,16 @@ ProfilerResultsPresenter >> menu [
 	^ self newMenu
 		  title: 'Node menu';
 		  addGroup: [ :aGroup | 
-			  aGroup addItem: [ :anItem | 
+			  aGroup
+				  addItem: [ :anItem | 
 					  anItem
 						  name: 'Go into';
 						  shortcut: $g meta;
 						  description: 'Make node the root of the tree';
-						  action: [ self goInto	] ];
-			  addItem: [ :anItem | 
+						  action: [ self goInto ] ];
+				  addItem: [ :anItem | 
 					  anItem
-						  name: 'Browse';
+						  name: 'Browse method';
 						  shortcut: $b meta;
 						  description: 'Browse code in Calypso';
 						  action: [ self browseSelectedItem ] ] ]
@@ -270,10 +271,10 @@ ProfilerResultsPresenter >> newTreeTablePresenter [
 				    evaluated: [ :node | node reportString ])
 				   width: 500;
 				   yourself);
-		  addColumn:
+		  "addColumn:
 			  ((SpStringTableColumn title: 'Tally' evaluated: #tally)
 				   width: 200;
-				   yourself);
+				   yourself);"
 		  "addColumn:
 			  (SpLinkTableColumn new
 					title: 'Go into';

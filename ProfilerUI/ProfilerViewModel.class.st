@@ -53,7 +53,7 @@ ProfilerViewModel >> initialize [
 	code := '10000 factorial'
 ]
 
-{ #category : #accessing }
+{ #category : #'accessing nodes' }
 ProfilerViewModel >> leaveItems [
 	^ profilerModel leaveItems
 ]
@@ -63,7 +63,7 @@ ProfilerViewModel >> leaveItemsOver: perCent [
 	^ profilerModel leaveItemsOver: perCent
 ]
 
-{ #category : #constants }
+{ #category : #private }
 ProfilerViewModel >> newProfilerModel [
 
 	^ profilerModel := self profilerClass newProfilerModel
@@ -74,7 +74,7 @@ ProfilerViewModel >> profileAllProcesses [
 	^ profileAllProcesses
 ]
 
-{ #category : #constants }
+{ #category : #accessing }
 ProfilerViewModel >> profileAllProcesses: aBoolean [
 	profileAllProcesses := aBoolean
 ]
@@ -89,7 +89,7 @@ ProfilerViewModel >> profilerClass: aClass [
 	profilerClass := aClass
 ]
 
-{ #category : #constants }
+{ #category : #accessing }
 ProfilerViewModel >> profilerModel [
 
 	^ profilerModel
@@ -121,7 +121,7 @@ ProfilerViewModel >> rootTallyItemsOver: anInteger [
 	^ profilerModel rootTallyItemsOver: anInteger
 ]
 
-{ #category : #profiling }
+{ #category : #private }
 ProfilerViewModel >> runBlockAndProfile: aBlock [
 
 	[aBlock ensure: [ 
