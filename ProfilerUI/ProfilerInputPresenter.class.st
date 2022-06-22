@@ -35,7 +35,7 @@ ProfilerInputPresenter >> initializeActions [
 
 	profileItButton action: [ 
 		viewModel profilerThreshold: 0.
-		viewModel runProfiler ]
+		viewModel runProfilerNotifying: self ]
 ]
 
 { #category : #initialization }
@@ -75,6 +75,13 @@ ProfilerInputPresenter >> initializePresenters [
 		add: codeInput;
 		add: profileItButton.
 	self initializeActions
+]
+
+{ #category : #'error handling' }
+ProfilerInputPresenter >> notify: errorMessage at: positionIndex in: sourceCode [ 
+
+	codeInput notify: errorMessage at: positionIndex in: sourceCode 
+
 ]
 
 { #category : #initialization }

@@ -38,6 +38,16 @@ ProfilerViewModel >> code: aString [
 	code := aString
 ]
 
+{ #category : #constants }
+ProfilerViewModel >> doItSelectorsPath [
+	^ #( 'newProcess' 'runBlockAndProfile:' 'ensure:' 'DoIt' 'DoIt' )
+]
+
+{ #category : #constants }
+ProfilerViewModel >> doItSourceCode [
+	^ 'self runBlockAndProfile: [self profilerModel startProfiling. [' , self code,'] value ]'
+]
+
 { #category : #api }
 ProfilerViewModel >> hideNodesUnder: aNumber [
 	"minimum percentage a node must have to be shown"
@@ -130,19 +140,19 @@ ProfilerViewModel >> runBlockAndProfile: aBlock [
 			(ProfilingFinishedAnnouncement new success: true) ]] fork
 ]
 
-{ #category : #constants }
-ProfilerViewModel >> runProfiler [
+{ #category : #api }
+ProfilerViewModel >> runProfilerNotifying: requestor [
 
 	| compiledMethod |
 	profilerModel := self newProfilerModel.
 	profilerModel threshold: profilerThreshold.
-	
+
 	self announcer announce: ProfilingStartedAnnouncement new.
+
 	compiledMethod := Smalltalk compiler
-		                  source:
-			                  'self runBlockAndProfile: [self profilerModel startProfiling. ' , self code,']';
+		                  source: self doItSourceCode;
 		                  context: nil;
-		                  requestor: self;
+		                  requestor: requestor;
 		                  noPattern: true;
 		                  failBlock: [ ^ self ];
 		                  compile.

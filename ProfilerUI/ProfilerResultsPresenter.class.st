@@ -337,7 +337,7 @@ ProfilerResultsPresenter >> selectDoItNode [
 
 	| selectorsPath |
 	
-	selectorsPath := #( 'newProcess' 'runBlockAndProfile:' 'ensure:' 'DoIt' ).
+	selectorsPath := viewModel doItSelectorsPath.
 	treeTable expandAllSuchThat: [ :item | 
 		(selectorsPath indexOf: item tallyObject method selector) > 0 ].
 
