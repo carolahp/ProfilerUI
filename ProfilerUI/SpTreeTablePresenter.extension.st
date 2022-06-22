@@ -1,27 +1,32 @@
 Extension { #name : #SpTreeTablePresenter }
 
 { #category : #'*ProfilerUI' }
-SpTreeTablePresenter >> expandAllSuchThat: aFullBlockClosure [ 
-	| rootItem |
-	rootItem := self adapter widget dataSource rootItem.
-	rootItem collapseAll.
-	rootItem expandAllSuchThat: aFullBlockClosure 
+SpTreeTablePresenter >> expandAllSuchThat: aBlock [
+
+	self withAdapterPerformOrDefer: [ :anAdapter | 
+		| rootItem |
+		rootItem := anAdapter widget dataSource rootItem.
+		rootItem collapseAll.
+		rootItem expandAllSuchThat: aBlock ]
 ]
 
 { #category : #'*ProfilerUI' }
-SpTreeTablePresenter >> selectPathOfNodes: aCollection evaluationBlock: aFullBlockClosure [
+SpTreeTablePresenter >> selectPathOfNodes: selectorsPath evaluationBlock: aBlock [
 
-	| node selectorsPath indexPath |
-	selectorsPath := aCollection.
-	node := self adapter widget dataSource rootItem.
+	self withAdapterPerformOrDefer: [ :anAdapter | 
+		| item indexPath |
+		selectorsPath.
+		item := anAdapter widget dataSource rootItem.
 
-	indexPath := selectorsPath collect: [ :selector | 
-		             | child index |
-		             child := (node children select: [ :chld | 
-										aFullBlockClosure value: chld value: selector ]) first.
-		             index := node children indexOf: child.
-		             node := child.
-		             index ].
-	self selectPath: indexPath scrollToSelection: true.
-	self refresh
+		indexPath := selectorsPath collect: [ :selector | 
+			             | child index |
+			             child := (item children select: [ :chld | 
+				                       aBlock
+					                       value: chld
+					                       value: selector ]) first.
+			             index := item children indexOf: child.
+			             item := child.
+			             index ].
+		self selectPath: indexPath scrollToSelection: true.
+		self refresh ]
 ]

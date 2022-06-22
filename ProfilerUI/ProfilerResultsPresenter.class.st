@@ -112,8 +112,7 @@ ProfilerResultsPresenter >> goInto [
 	self removeToolbarItemsAfter: navigationBar selectedItem.
 	navItem := self addToolbarItem: treeTable selectedItem.
 	self selectToolbarItem: navItem.
-	self updateResults.
-	treeTable expandRoots
+	self updateResults
 ]
 
 { #category : #private }
@@ -183,11 +182,11 @@ ProfilerResultsPresenter >> initializeActions [
 
 	expandAllButton action: [ treeTable expandAll ].
 
-	thresholdExpandInput whenSubmitDo: [ :text |
-		self expandNodesOver: text asNumber ].
-	
-	thresholdFilterInput whenSubmitDo: [ :text | 
-		self hideNodesUnder: text asNumber ].	
+	thresholdExpandInput whenTextChangedDo: [ :text |
+		self expandNodesOver: thresholdExpandInput number ].
+
+	thresholdFilterInput whenTextChangedDo: [ :text | 
+		self hideNodesUnder: thresholdFilterInput number ].	
 	
 	treeDropList whenSelectedItemChangedDo: [ :item | 
 		viewModel showLeavesOnly: item value.
@@ -296,7 +295,7 @@ ProfilerResultsPresenter >> newTreeTablePresenter [
 					action: [ :node | treeTable selectItem: node. self goInto  ];
 					yourself);"
 		  children: [ :node | | perCent |
-				perCent := thresholdFilterInput text asNumber.
+				perCent := thresholdFilterInput number.
 				viewModel hideNodesUnder: perCent. 
 				(node sonsOver: perCent) asOrderedCollection sort reverse ];
 		  bindKeyCombination: Character arrowLeft asKeyCombination
@@ -395,7 +394,8 @@ ProfilerResultsPresenter >> unsubscribeFromProfilingAnnouncements [
 { #category : #update }
 ProfilerResultsPresenter >> updateResults [
 	
-	treeTable roots: viewModel rootItems
+	treeTable roots: viewModel rootItems.
+	treeTable expandRoots
 ]
 
 { #category : #update }
