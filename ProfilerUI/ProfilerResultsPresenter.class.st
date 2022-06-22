@@ -112,7 +112,8 @@ ProfilerResultsPresenter >> goInto [
 	self removeToolbarItemsAfter: navigationBar selectedItem.
 	navItem := self addToolbarItem: treeTable selectedItem.
 	self selectToolbarItem: navItem.
-	self updateResults
+	self updateResults.
+	treeTable expandRoots
 ]
 
 { #category : #private }
@@ -131,6 +132,18 @@ ProfilerResultsPresenter >> handleArrowLeft [
 ProfilerResultsPresenter >> handleArrowRight [
 
 	self expandPath: treeTable selection selectedPath
+]
+
+{ #category : #'event handling' }
+ProfilerResultsPresenter >> handleProfilingFinished [
+
+	| navItem |
+	self updateResults.
+	viewModel showLeavesOnly ifFalse: [ self selectDoItNode ].
+	self updateSummaryText.
+	navigationBar removeAllItems.
+	navItem := self addToolbarItem: viewModel profilerModel tallyRoot.
+	self selectToolbarItem: navItem
 ]
 
 { #category : #'event handling' }
@@ -368,14 +381,9 @@ ProfilerResultsPresenter >> selectToolbarItem: anItem [
 { #category : #subscription }
 ProfilerResultsPresenter >> subscribeOnProfilingAnnouncements [
 
-	| navItem |
-	viewModel announcer when: ProfilingFinishedAnnouncement do: [ 
-		self updateResults.
-		viewModel showLeavesOnly ifFalse: [self selectDoItNode].
-		self updateSummaryText.
-		navigationBar removeAllItems.
-		navItem := self addToolbarItem: viewModel profilerModel tallyRoot.
-		self selectToolbarItem: navItem ]
+	viewModel announcer
+		when: ProfilingFinishedAnnouncement
+		do: [ self handleProfilingFinished ]
 ]
 
 { #category : #subscription }
