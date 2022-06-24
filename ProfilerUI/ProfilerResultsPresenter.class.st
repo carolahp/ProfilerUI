@@ -223,16 +223,22 @@ ProfilerResultsPresenter >> menu [
 			  aGroup
 				  addItem: [ :anItem | 
 					  anItem
-						  name: 'Go into';
+						  name: 'Go Into';
 						  shortcut: $g meta;
-						  description: 'Make node the root of the tree';
+						  description: 'Make the root of the tree';
 						  action: [ self goInto ] ];
 				  addItem: [ :anItem | 
 					  anItem
-						  name: 'Browse method';
+						  name: 'Browse';
 						  shortcut: $b meta;
-						  description: 'Browse code in Calypso';
-						  action: [ self browseSelectedItem ] ] ]
+						  description: 'Browse in Calypso';
+						  action: [ self browseSelectedItem ] ];
+				  addItem: [ :anItem | 
+					  anItem
+						  name: 'Inspect';
+						  shortcut: $i meta;
+						  description: 'Open inspector';
+						  action: [ anItem inspect ] ] ]
 ]
 
 { #category : #initialization }
@@ -257,6 +263,11 @@ ProfilerResultsPresenter >> newProfilerToolbar [
 ]
 
 { #category : #initialization }
+ProfilerResultsPresenter >> newProfilerTreeTable [
+	^ self instantiate: ProfilerTreeTablePresenter
+]
+
+{ #category : #initialization }
 ProfilerResultsPresenter >> newThresholdExpandInput [
 
 	^ self newProfilerNumberInput
@@ -277,12 +288,10 @@ ProfilerResultsPresenter >> newThresholdFilterInput [
 { #category : #initialization }
 ProfilerResultsPresenter >> newTreeTablePresenter [
 
-	^ self newTreeTable
-		  addColumn: ((SpStringTableColumn
+	^ self newProfilerTreeTable
+		  addColumn: (SpStringTableColumn
 				    title: 'Method'
-				    evaluated: [ :node | node reportString ])
-				   width: 500;
-				   yourself);
+				    evaluated: [ :node | node reportString ]);
 		  "addColumn:
 			  ((SpStringTableColumn title: 'Tally' evaluated: #tally)
 				   width: 200;

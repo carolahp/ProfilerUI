@@ -41,7 +41,7 @@ ProfilerInputPresenter >> initializeActions [
 { #category : #initialization }
 ProfilerInputPresenter >> initializePresenters [
 
-	codeInput := self newCode text: viewModel code.
+	codeInput := self newCode beForScripting; text: viewModel code.
 
 	profilerDropList := self newDropList
 		                    help: 'Select the desired profiler.';
