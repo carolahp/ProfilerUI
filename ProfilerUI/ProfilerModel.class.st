@@ -83,9 +83,9 @@ ProfilerModel >> tallyRoot [
 { #category : #private }
 ProfilerModel >> tallyRoot: aTallyObject [
 
-	^ tallyRoot := aTallyObject asTallyModel
+	tallyRoot := aTallyObject asTallyModel
 			               profilerModel: self;
-			               yourself 
+			               yourself
 ]
 
 { #category : #accessing }

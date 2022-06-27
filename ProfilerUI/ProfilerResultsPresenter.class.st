@@ -38,9 +38,7 @@ ProfilerResultsPresenter >> addToolbarItem: anItem [
 		label: anItem methodName;
 		help: 'Display ' , anItem methodName , ' as root';
 		action: [ 
-			self goInto: anItem.
-			self selectToolbarItem: navItem.
-			self updateResults.
+			treeTable goInto: anItem.
 			navItem node ifNotNil: [ :node | treeTable selectPath: node scrollToSelection: true ]
 			 ].
 
@@ -48,18 +46,6 @@ ProfilerResultsPresenter >> addToolbarItem: anItem [
 		items last node: treeTable selectionMode selectedPath ].
 	navigationBar addItem: navItem.
 	^ navItem
-]
-
-{ #category : #private }
-ProfilerResultsPresenter >> browseSelectedItem [ 
-	treeTable selectedItem tallyObject method browse
-]
-
-{ #category : #private }
-ProfilerResultsPresenter >> collapsePath: aPath [
-	treeTable
-		collapsePath: aPath;
-		selectPath: aPath
 ]
 
 { #category : #initialization }
@@ -86,51 +72,18 @@ ProfilerResultsPresenter >> configurationSectionLayout [
 ]
 
 { #category : #private }
-ProfilerResultsPresenter >> expandNodesOver: aNumber [
-
-	| thresholdPercentage |
-	thresholdPercentage := aNumber.
-
-	treeTable expandAllSuchThat: [ :item | 
-		item weight >= thresholdPercentage ].
-
-	treeTable refresh
-]
-
-{ #category : #private }
-ProfilerResultsPresenter >> expandPath: aPath [
-	treeTable
-		expandPath: aPath;
-		selectPath: aPath
-]
-
-{ #category : #private }
-ProfilerResultsPresenter >> goInto [
-
-	| navItem |
-	self goInto: treeTable selectedItem.
-	self removeToolbarItemsAfter: navigationBar selectedItem.
-	navItem := self addToolbarItem: treeTable selectedItem.
-	self selectToolbarItem: navItem.
-	self updateResults
-]
-
-{ #category : #private }
 ProfilerResultsPresenter >> goInto: anItem [
 
-	viewModel profilerModel tallyRoot: anItem tallyObject
-]
-
-{ #category : #'event handling' }
-ProfilerResultsPresenter >> handleArrowLeft [
-
-	self collapsePath: treeTable selection selectedPath
-]
-
-{ #category : #'event handling' }
-ProfilerResultsPresenter >> handleArrowRight [
-
-	self expandPath: treeTable selection selectedPath
+	| toolbarButton |
+	self removeToolbarItemsAfter: navigationBar selectedItem.
+	"Either the button in the navigationBar must be created (when going into an item in the treeTable)
+	or it already exists (when it was clicked)"
+	toolbarButton := (navigationBar items select: [ :item | 
+		            item object == anItem ])
+		           ifEmpty: [ self addToolbarItem: anItem ]
+		           ifNotEmpty: [ :result | result first ].
+	self selectToolbarItem: toolbarButton.
+	self updateResults
 ]
 
 { #category : #'event handling' }
@@ -150,24 +103,13 @@ ProfilerResultsPresenter >> handleSelectionChange: item [
 
 	item
 		ifNil: [ 
-			codePresenter text: ''.
-			codePresenter beForMethod: nil.
-			browseButton disable ]
+			browseButton disable.
+			codePresenter methodOrBlock: nil ]
 		ifNotNil: [ 
-			| methodOrBlock |
 			browseButton enable.
-			methodOrBlock := item tallyObject method.
-			codePresenter text: methodOrBlock sourceCode.
-			codePresenter beForMethod: (methodOrBlock isCompiledBlock
-					 ifTrue: [ methodOrBlock method ]
-					 ifFalse: [ methodOrBlock ]).
-			navigationBar selectedItem ifNotNil: [ :btn | btn node: treeTable selectionMode selectedPath ] ]
-]
-
-{ #category : #private }
-ProfilerResultsPresenter >> hideNodesUnder: aNumber [ 
-	viewModel hideNodesUnder: aNumber.
-	self updateResults
+			codePresenter methodOrBlock: item tallyObject methodOrBlock.
+			navigationBar selectedItem ifNotNil: [ :btn | 
+				btn node: treeTable selectionMode selectedPath ] ]
 ]
 
 { #category : #initialization }
@@ -175,7 +117,7 @@ ProfilerResultsPresenter >> initializeActions [
 
 	treeTable whenSelectedItemChangedDo: [ :item | self handleSelectionChange: item ].
 	"Code section actions"
-	browseButton action: [ self browseSelectedItem ].
+	browseButton action: [ treeTable selectedTallyObject originMethod browse ].
 	
 	"Configuration section actions"
 	collapseAllButton action: [ treeTable collapseAll ].
@@ -183,10 +125,11 @@ ProfilerResultsPresenter >> initializeActions [
 	expandAllButton action: [ treeTable expandAll ].
 
 	thresholdExpandInput whenTextChangedDo: [ :text |
-		self expandNodesOver: thresholdExpandInput number ].
+		treeTable expandNodesOver: thresholdExpandInput number ].
 
 	thresholdFilterInput whenTextChangedDo: [ :text | 
-		self hideNodesUnder: thresholdFilterInput number ].	
+		treeTable hideNodesUnder: thresholdFilterInput number.
+		self updateResults ].	
 	
 	treeDropList whenSelectedItemChangedDo: [ :item | 
 		viewModel showLeavesOnly: item value.
@@ -202,43 +145,15 @@ ProfilerResultsPresenter >> initializePresenters [
 	self layout: (SpBoxLayout newTopToBottom
 			 add: (summaryText := self newLabel label: 'Reporting ') height: h;
 			 add: (navigationBar := self newProfilerToolbar) height: h;
-			 add: (treeTable := self newTreeTablePresenter);
+			 add: (treeTable := self newProfilerTreeTable);
 			 add: self configurationSectionLayout height: h * 3;
-			 add: (codePresenter := self newCode beNotEditable);
+			 add: (codePresenter := self newProfilerCode);
 			 add: (SpBoxLayout newLeftToRight addLast:
 						  (browseButton := self newBrowseButton))
 			 height: h;
 			 yourself).
-
 	self subscribeOnProfilingAnnouncements.
 	self initializeActions
-]
-
-{ #category : #initialization }
-ProfilerResultsPresenter >> menu [
-
-	^ self newMenu
-		  title: 'Node menu';
-		  addGroup: [ :aGroup | 
-			  aGroup
-				  addItem: [ :anItem | 
-					  anItem
-						  name: 'Go Into';
-						  shortcut: $g meta;
-						  description: 'Make the root of the tree';
-						  action: [ self goInto ] ];
-				  addItem: [ :anItem | 
-					  anItem
-						  name: 'Browse';
-						  shortcut: $b meta;
-						  description: 'Browse in Calypso';
-						  action: [ self browseSelectedItem ] ];
-				  addItem: [ :anItem | 
-					  anItem
-						  name: 'Inspect';
-						  shortcut: $i meta;
-						  description: 'Open inspector';
-						  action: [ anItem inspect ] ] ]
 ]
 
 { #category : #initialization }
@@ -249,6 +164,12 @@ ProfilerResultsPresenter >> newBrowseButton [
 		  label: 'Browse';
 		  disable;
 		  yourself
+]
+
+{ #category : #initialization }
+ProfilerResultsPresenter >> newProfilerCode [
+
+	^ self instantiate: ProfilerCodePresenter 
 ]
 
 { #category : #initialization }
@@ -264,7 +185,10 @@ ProfilerResultsPresenter >> newProfilerToolbar [
 
 { #category : #initialization }
 ProfilerResultsPresenter >> newProfilerTreeTable [
-	^ self instantiate: ProfilerTreeTablePresenter
+
+	^ (self instantiate: ProfilerTreeTablePresenter)
+		  viewModel: viewModel;
+		  yourself
 ]
 
 { #category : #initialization }
@@ -283,43 +207,6 @@ ProfilerResultsPresenter >> newThresholdFilterInput [
 		  help: 'Only nodes with a percentage of time greater than this threshold will be shown';
 		  number: viewModel showNodeThreshold;
 		  yourself
-]
-
-{ #category : #initialization }
-ProfilerResultsPresenter >> newTreeTablePresenter [
-
-	^ self newProfilerTreeTable
-		  addColumn: (SpStringTableColumn
-				    title: 'Method'
-				    evaluated: [ :node | node reportString ]);
-		  "addColumn:
-			  ((SpStringTableColumn title: 'Tally' evaluated: #tally)
-				   width: 200;
-				   yourself);"
-		  "addColumn:
-			  (SpLinkTableColumn new
-					title: 'Go into';
-					width: 70;
-					evaluated: [ :node | '->' ];
-					action: [ :node | treeTable selectItem: node. self goInto  ];
-					yourself);"
-		  children: [ :node | | perCent |
-				perCent := thresholdFilterInput number.
-				viewModel hideNodesUnder: perCent. 
-				(node sonsOver: perCent) asOrderedCollection sort reverse ];
-		  bindKeyCombination: Character arrowLeft asKeyCombination
-		  toAction: [ self handleArrowLeft ];
-		  bindKeyCombination: Character arrowRight asKeyCombination
-		  toAction: [ self handleArrowRight ];
-		  contextMenu: self menu;
-		  "addColumn: (SpLinkTableColumn new
-				   title: 'Go';
-				   width: 70;
-				   evaluated: [ :aNode | '->' ];
-				   action: [ :aNode |  attributeTable toggleFilter: aNode variableTag. owner updateHeaderBar. ];
-				   sortFunction: #variableTag ascending;
-				   yourself);"
-			  yourself
 ]
 
 { #category : #initialization }
@@ -391,7 +278,9 @@ ProfilerResultsPresenter >> subscribeOnProfilingAnnouncements [
 
 	viewModel announcer
 		when: ProfilingFinishedAnnouncement
-		do: [ self handleProfilingFinished ]
+		do: [ self handleProfilingFinished ];
+		when: ProfilerResultsTreeRootChangedAnnouncement 
+		do: [ :evt | self goInto: evt item ]
 ]
 
 { #category : #subscription }
@@ -403,8 +292,7 @@ ProfilerResultsPresenter >> unsubscribeFromProfilingAnnouncements [
 { #category : #update }
 ProfilerResultsPresenter >> updateResults [
 	
-	treeTable roots: viewModel rootItems.
-	treeTable expandRoots
+	treeTable updateResults
 ]
 
 { #category : #update }

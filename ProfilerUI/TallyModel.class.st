@@ -26,6 +26,19 @@ TallyModel >> data [
 	^ self
 ]
 
+{ #category : #accessing }
+TallyModel >> icon [
+
+	| methodOrBlock |
+	methodOrBlock := tallyObject methodOrBlock.
+	^ methodOrBlock isCompiledBlock
+		  ifTrue: [ #smallLeftFlush ]
+		  ifFalse: [ 
+			  methodOrBlock isPrimitive
+				  ifTrue: [ #transcript ]
+				  ifFalse: [ #workspace ] ]
+]
+
 { #category : #'collecting leaves' }
 TallyModel >> leavesInto: aCollection fromSender: anObject [
 

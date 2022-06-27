@@ -160,6 +160,12 @@ ProfilerViewModel >> runProfilerNotifying: requestor [
 	compiledMethod valueWithReceiver: self arguments: #(  )
 ]
 
+{ #category : #'accessing nodes' }
+ProfilerViewModel >> setTallyRoot: anItem [
+	profilerModel tallyRoot: anItem tallyObject.
+	self announcer announce: (ProfilerResultsTreeRootChangedAnnouncement new item: anItem)
+]
+
 { #category : #accessing }
 ProfilerViewModel >> showLeavesOnly [
 
