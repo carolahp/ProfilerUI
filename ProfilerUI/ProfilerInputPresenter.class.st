@@ -25,8 +25,6 @@ ProfilerInputPresenter class >> withViewModel: aProfilerViewModel [
 { #category : #initialization }
 ProfilerInputPresenter >> initializeActions [
 
-	codeInput whenTextChangedDo: [ :text | viewModel code: text ].
-
 	profilerDropList whenSelectedItemChangedDo: [ :item | 
 		viewModel profilerClass: item ].
 
@@ -34,14 +32,12 @@ ProfilerInputPresenter >> initializeActions [
 		viewModel profileAllProcesses: state ].
 
 	profileItButton action: [ 
-		viewModel profilerThreshold: 0.
-		viewModel runProfilerNotifying: self ]
+		viewModel profileCode: codeInput text notifying: self ]
 ]
 
 { #category : #initialization }
 ProfilerInputPresenter >> initializePresenters [
-
-	codeInput := self newCode beForScripting; text: viewModel code.
+	codeInput := self newCode beForScripting.
 
 	profilerDropList := self newDropList
 		                    help: 'Select the desired profiler.';

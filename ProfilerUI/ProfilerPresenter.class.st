@@ -69,5 +69,5 @@ ProfilerPresenter >> unsubscribe [
 { #category : #accessing }
 ProfilerPresenter >> viewModel [
 
-	^ viewModel ifNil: [ viewModel := ProfilerViewModel new ]
+	^ viewModel ifNil: [ viewModel := ProfilerModel new ]
 ]

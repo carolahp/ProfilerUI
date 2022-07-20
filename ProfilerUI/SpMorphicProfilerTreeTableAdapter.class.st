@@ -9,10 +9,127 @@ Class {
 	#category : #'ProfilerUI-SpecAdapters'
 }
 
-{ #category : #private }
-SpMorphicProfilerTreeTableAdapter >> rootForItems: aCollection [
+{ #category : #factory }
+SpMorphicProfilerTreeTableAdapter >> addModelTo: tableMorph [
 
-	^ ProfilerFTRootItem new
-		data: aCollection;
-		yourself
+	"self addColumnsFromPresenterTo: tableMorph."
+	self ensureAtLeastOneColumnIn: tableMorph.
+
+	self presenter selection isMultipleSelection ifTrue: [  
+		tableMorph beMultipleSelection ].
+
+	"self isShowingColumnHeaders 
+		ifTrue: [ tableMorph showColumnHeaders ] 
+		ifFalse: [ tableMorph hideColumnHeaders ]."
+
+	"self isResizable 
+		ifTrue: [ tableMorph beResizable ] 
+		ifFalse: [ tableMorph beNotResizable ]."
+		
+	"self isSearchEnabled
+		ifTrue: [ tableMorph enableSearch ]
+		ifFalse: [ tableMorph disableFunction ].
+"
+	tableMorph setBalloonText: self model help.
+	
+	"tableMorph dataSource: self newDataSource."
+	
+	self presenter selection isEmpty 
+		ifFalse: [ self updateSelectionOf: tableMorph ].
+	
+	"self presenter whenSelectionChangedDo: [ 
+		self updateSelectionOf: tableMorph ]."
+	
+	self presenter whenRootsChangedDo: [ 
+		"tableMorph selectIndexes: #()."
+		tableMorph buildContents
+		"tableMorph dataSource: self newDataSource" ].
+	
+	"self presenter whenShowColumnHeadersChangedDo: [ 	
+		self isShowingColumnHeaders 
+			ifTrue: [ tableMorph showColumnHeaders ] 
+			ifFalse: [ tableMorph hideColumnHeaders ] ].
+	"	
+	"self registerColumnsChangedEventTo: tableMorph.
+	"
+	"tableMorph
+		onAnnouncement: FTSelectionChanged
+			send: #selectionChanged:
+			to: self;
+		onAnnouncement: FTStrongSelectionChanged
+			send: #strongSelectionChanged:
+			to: self"
+]
+
+{ #category : #factory }
+SpMorphicProfilerTreeTableAdapter >> buildWidget [
+	| tableMorph |
+
+	tableMorph := (MorphTreeMorph on: self presenter viewModel)
+		rowInset: 2;
+		columnInset: 4;
+		autoDeselection: true;
+		getMenuSelector:#menu:shifted:;
+		keyDownActionSelector: #keyDown:from:;
+		treeLineWidth: 1;
+		treeLineDashes: {5. 1};
+		lineColorBlock: [:node | {Color gray. Color orange. Color brown. Color magenta. Color blue} at: ((node level \\ 5) + 1)];
+		doubleClickSelector: #browseItem;
+		rowColorForEven: self theme lightBackgroundColor;
+		yourself.
+	
+	self addModelTo: tableMorph.	
+	tableMorph buildContents.
+	
+	"self addModelTo: tableMorph."
+	widget := tableMorph.
+	"self configureScrolling."
+
+	^ tableMorph
+]
+
+{ #category : #accessing }
+SpMorphicProfilerTreeTableAdapter >> collapseAll [ 
+	^ widget collapseAll
+]
+
+{ #category : #accessing }
+SpMorphicProfilerTreeTableAdapter >> collapsePath: anArray [ 
+	
+	widget collapseNodePath: anArray
+]
+
+{ #category : #accessing }
+SpMorphicProfilerTreeTableAdapter >> expandAll [ 
+	^ widget expandAll
+]
+
+{ #category : #accessing }
+SpMorphicProfilerTreeTableAdapter >> expandRoots [
+
+	widget expandRoots
+]
+
+{ #category : #'private - factory' }
+SpMorphicProfilerTreeTableAdapter >> newColumnFrom: anObject [
+	
+	^ MorphTreeColumn new 
+		rowMorphGetSelector: [:node | StringMorph contents: node item asString].
+]
+
+{ #category : #updating }
+SpMorphicProfilerTreeTableAdapter >> refreshTree [
+
+	widget updateList
+]
+
+{ #category : #accessing }
+SpMorphicProfilerTreeTableAdapter >> scrollToSelection [
+	self widget scrollSelectionIntoView
+]
+
+{ #category : #accessing }
+SpMorphicProfilerTreeTableAdapter >> selectedItem [
+	
+	^ self widget selectedMorph complexContents
 ]

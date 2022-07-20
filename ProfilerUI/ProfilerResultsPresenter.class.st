@@ -38,37 +38,24 @@ ProfilerResultsPresenter >> addToolbarItem: anItem [
 		label: anItem methodName;
 		help: 'Display ' , anItem methodName , ' as root';
 		action: [ 
-			treeTable goInto: anItem.
-			navItem node ifNotNil: [ :node | treeTable selectPath: node scrollToSelection: true ]
+			|selectorsPath theNode|
+			navItem node ifNotNil: [ 
+				selectorsPath := navItem node path collect: [:item | item item method selector] ].
+			
+			viewModel setTallyRoot: anItem.
+			selectorsPath ifNotNil: [ treeTable expandAllSuchThat: [ :item | | bool |
+					bool := (selectorsPath indexOf: item item method selector) > 0.
+					bool ifTrue: [ theNode := item ].
+					bool ].
+				treeTable selectPath: theNode path scrollToSelection: true ] .
 			 ].
-
-	navigationBar items ifNotEmpty: [ :items | 
-		items last node: treeTable selectionMode selectedPath ].
+		
+	navigationBar items ifNotEmpty: [ :items |
+		items last node: treeTable selectedItem ].
+	
+	
 	navigationBar addItem: navItem.
 	^ navItem
-]
-
-{ #category : #initialization }
-ProfilerResultsPresenter >> configurationSectionLayout [
-
-	^ (SpBoxLayout newTopToBottom
-			 add: (self newLabel label: 'Configure results display');
-			 add: (SpBoxLayout newLeftToRight
-					  add: (treeDropList := self newTreeVisualizationDropList);
-					  add: (expandAllButton := self newButton label: 'Expand All') width: 100;
-					  add: (collapseAllButton := self newButton label: 'Collapse All') width: 100;
-					  yourself);
-			 add: (SpBoxLayout newLeftToRight
-					  add: (self newLabel label: 'Hide nodes under: ') width: 125;
-					  add: (thresholdFilterInput := self newThresholdFilterInput) width: 55;
-					  add: (self newLabel label: '%') width: 25;
-					  yourself);
-			 add: (SpBoxLayout newLeftToRight
-					  add: (self newLabel label: 'Expand nodes over: ') width: 125;
-					  add: (thresholdExpandInput := self newThresholdExpandInput) width: 55;
-					  add: (self newLabel label: '%') width: 25; 
-					  yourself);
-			  yourself)
 ]
 
 { #category : #private }
@@ -94,8 +81,14 @@ ProfilerResultsPresenter >> handleProfilingFinished [
 	viewModel showLeavesOnly ifFalse: [ self selectDoItNode ].
 	self updateSummaryText.
 	navigationBar removeAllItems.
-	navItem := self addToolbarItem: viewModel profilerModel tallyRoot.
+	navItem := self addToolbarItem: viewModel tallyRoot.
 	self selectToolbarItem: navItem
+]
+
+{ #category : #'event handling' }
+ProfilerResultsPresenter >> handleSelectionChange [
+	
+	self handleSelectionChange: treeTable selectedItem
 ]
 
 { #category : #'event handling' }
@@ -107,27 +100,29 @@ ProfilerResultsPresenter >> handleSelectionChange: item [
 			codePresenter methodOrBlock: nil ]
 		ifNotNil: [ 
 			browseButton enable.
-			codePresenter methodOrBlock: item tallyObject methodOrBlock.
+			codePresenter methodOrBlock: item item methodOrBlock.
 			navigationBar selectedItem ifNotNil: [ :btn | 
-				btn node: treeTable selectionMode selectedPath ] ]
+				btn object item = treeTable selectedItem item ifFalse: [ 
+					btn node: treeTable selectedItem ] ] ]
 ]
 
 { #category : #initialization }
 ProfilerResultsPresenter >> initializeActions [
 
-	treeTable whenSelectedItemChangedDo: [ :item | self handleSelectionChange: item ].
+	treeTable whenSelectedItemChangedSend: #handleSelectionChange to: self.
 	"Code section actions"
-	browseButton action: [ treeTable selectedTallyObject originMethod browse ].
+	browseButton action: [ treeTable selectedItem browseItem ].
 	
 	"Configuration section actions"
 	collapseAllButton action: [ treeTable collapseAll ].
 
 	expandAllButton action: [ treeTable expandAll ].
 
-	thresholdExpandInput whenTextChangedDo: [ :text |
+	thresholdExpandInput whenSubmitDo: [ :text |
+		treeTable collapseAll.
 		treeTable expandNodesOver: thresholdExpandInput number ].
 
-	thresholdFilterInput whenTextChangedDo: [ :text | 
+	thresholdFilterInput whenSubmitDo: [ :text | 
 		treeTable hideNodesUnder: thresholdFilterInput number.
 		self updateResults ].	
 	
@@ -146,7 +141,7 @@ ProfilerResultsPresenter >> initializePresenters [
 			 add: (summaryText := self newLabel label: 'Reporting ') height: h;
 			 add: (navigationBar := self newProfilerToolbar) height: h;
 			 add: (treeTable := self newProfilerTreeTable);
-			 add: self configurationSectionLayout height: h * 3;
+			 add: self newConfigurationSectionLayout height: h * 3;
 			 add: (codePresenter := self newProfilerCode);
 			 add: (SpBoxLayout newLeftToRight addLast:
 						  (browseButton := self newBrowseButton))
@@ -156,7 +151,7 @@ ProfilerResultsPresenter >> initializePresenters [
 	self initializeActions
 ]
 
-{ #category : #initialization }
+{ #category : #'private - factory' }
 ProfilerResultsPresenter >> newBrowseButton [
 
 	^ self newButton
@@ -166,24 +161,47 @@ ProfilerResultsPresenter >> newBrowseButton [
 		  yourself
 ]
 
-{ #category : #initialization }
+{ #category : #'private - factory' }
+ProfilerResultsPresenter >> newConfigurationSectionLayout [
+
+	^ (SpBoxLayout newTopToBottom
+			 add: (self newLabel label: 'Configure results display');
+			 add: (SpBoxLayout newLeftToRight
+					  add: (treeDropList := self newTreeVisualizationDropList);
+					  add: (expandAllButton := self newButton label: 'Expand All') width: 100;
+					  add: (collapseAllButton := self newButton label: 'Collapse All') width: 100;
+					  yourself);
+			 add: (SpBoxLayout newLeftToRight
+					  add: (self newLabel label: 'Hide nodes under: ') width: 125;
+					  add: (thresholdFilterInput := self newThresholdFilterInput) width: 55;
+					  add: (self newLabel label: '%') width: 25;
+					  yourself);
+			 add: (SpBoxLayout newLeftToRight
+					  add: (self newLabel label: 'Expand nodes over: ') width: 125;
+					  add: (thresholdExpandInput := self newThresholdExpandInput) width: 55;
+					  add: (self newLabel label: '%') width: 25; 
+					  yourself);
+			  yourself)
+]
+
+{ #category : #'private - factory' }
 ProfilerResultsPresenter >> newProfilerCode [
 
 	^ self instantiate: ProfilerCodePresenter 
 ]
 
-{ #category : #initialization }
+{ #category : #'private - factory' }
 ProfilerResultsPresenter >> newProfilerNumberInput [
 	^ self instantiate: ProfilerNumberInput 
 ]
 
-{ #category : #initialization }
+{ #category : #'private - factory' }
 ProfilerResultsPresenter >> newProfilerToolbar [
 
 	^ self instantiate: ProfilerToolbarPresenter 
 ]
 
-{ #category : #initialization }
+{ #category : #'private - factory' }
 ProfilerResultsPresenter >> newProfilerTreeTable [
 
 	^ (self instantiate: ProfilerTreeTablePresenter)
@@ -191,7 +209,7 @@ ProfilerResultsPresenter >> newProfilerTreeTable [
 		  yourself
 ]
 
-{ #category : #initialization }
+{ #category : #'private - factory' }
 ProfilerResultsPresenter >> newThresholdExpandInput [
 
 	^ self newProfilerNumberInput
@@ -200,7 +218,7 @@ ProfilerResultsPresenter >> newThresholdExpandInput [
 		  yourself
 ]
 
-{ #category : #initialization }
+{ #category : #'private - factory' }
 ProfilerResultsPresenter >> newThresholdFilterInput [
 
 	^ self newProfilerNumberInput
@@ -209,7 +227,7 @@ ProfilerResultsPresenter >> newThresholdFilterInput [
 		  yourself
 ]
 
-{ #category : #initialization }
+{ #category : #'private - factory' }
 ProfilerResultsPresenter >> newTreeVisualizationDropList [
 	| items |
 	items := { 
@@ -243,20 +261,17 @@ ProfilerResultsPresenter >> removeToolbarItemsAfter: anItem [
 { #category : #private }
 ProfilerResultsPresenter >> selectDoItNode [
 
-	| selectorsPath |
+	| selectorsPath doItNode |
 	
 	selectorsPath := viewModel doItSelectorsPath.
-	treeTable expandAllSuchThat: [ :item | 
-		(selectorsPath indexOf: item tallyObject method selector) > 0 ].
-
-	[ 
-	treeTable
-		selectPathOfNodes: selectorsPath
-		evaluationBlock: [ :item :selector | 
-		item data tallyObject method selector = selector ] ]
-		on: SubscriptOutOfBounds
-		do: [ "this occurs when the profiled function took too little time" 
-			self inform: 'Impossible to display the profiled code. Probably execution time was too short' ]
+	
+	
+	treeTable expandAllSuchThat: [ :item | | bool | 
+		bool := (selectorsPath indexOf: item item method selector) > 0.
+		bool ifTrue: [ doItNode := item ].
+		bool ].
+	doItNode ifNil: [ self inform: 'Excecution was too fast!'. ^ self ].
+	treeTable selectNodePath: doItNode path.
 ]
 
 { #category : #private }
@@ -313,21 +328,4 @@ ProfilerResultsPresenter >> viewModel [
 ProfilerResultsPresenter >> viewModel: anObject [
 
 	viewModel := anObject
-]
-
-{ #category : #'error signalling' }
-ProfilerResultsPresenter >> warning: aString for: aPresenter [
-
-	self newPopover
-		addStyle: 'error';
-		relativeTo: aPresenter;
-		position: SpPopoverPosition top;
-		presenter: (SpPresenter new
-				 layout: (SpBoxLayout newTopToBottom
-						  borderWidth: 2;
-						  spacing: 0;
-						  add: (self newLabel label: aString);
-						  yourself);
-				 yourself);
-		popup
 ]
