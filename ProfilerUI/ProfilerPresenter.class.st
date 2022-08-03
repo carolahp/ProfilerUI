@@ -38,19 +38,20 @@ ProfilerPresenter >> initializeWindow: aWindowPresenter [
 	aWindowPresenter
 		title: self presenterTitle;
 		initialExtent: self initExtent;
-		windowIcon: self windowIcon
+		windowIcon: self windowIcon;
+		whenClosedDo: [ self unsubscribe ]
 ]
 
 { #category : #initialization }
 ProfilerPresenter >> newInputPresenter [
 
-	^ ProfilerInputPresenter withViewModel: self viewModel
+	^ ProfilerInputPresenter on: self viewModel
 ]
 
 { #category : #initialization }
 ProfilerPresenter >> newResultsPresenter [
 
-	^ ProfilerResultsPresenter withViewModel: self viewModel
+	^ ProfilerResultsPresenter on: self viewModel
 ]
 
 { #category : #accessing }

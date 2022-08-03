@@ -95,6 +95,12 @@ ProfilerTreeTablePresenter >> selectedItem [
 		^ anAdapter selectedItem ]
 ]
 
+{ #category : #'accessing - model' }
+ProfilerTreeTablePresenter >> setModelBeforeInitialization: aDomainObject [
+
+	viewModel := aDomainObject
+]
+
 { #category : #'expanding-collapsing' }
 ProfilerTreeTablePresenter >> updateResults [
 	self roots: viewModel rootItems.
@@ -105,11 +111,6 @@ ProfilerTreeTablePresenter >> updateResults [
 { #category : #accessing }
 ProfilerTreeTablePresenter >> viewModel [
 	^ viewModel
-]
-
-{ #category : #accessing }
-ProfilerTreeTablePresenter >> viewModel: aProfilerViewModel [ 
-	viewModel := aProfilerViewModel
 ]
 
 { #category : #adapter }

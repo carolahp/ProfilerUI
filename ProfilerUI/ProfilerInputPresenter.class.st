@@ -14,14 +14,6 @@ Class {
 	#category : #'ProfilerUI-View'
 }
 
-{ #category : #'instance creation' }
-ProfilerInputPresenter class >> withViewModel: aProfilerViewModel [
-	^ self basicNew
-		viewModel: aProfilerViewModel;
-		initialize;
-		yourself
-]
-
 { #category : #initialization }
 ProfilerInputPresenter >> initializeActions [
 
@@ -70,6 +62,8 @@ ProfilerInputPresenter >> initializePresenters [
 	self focusOrder
 		add: codeInput;
 		add: profileItButton.
+		
+	self subscribeOnProfilingAnnouncements.
 	self initializeActions
 ]
 
@@ -80,9 +74,21 @@ ProfilerInputPresenter >> notify: errorMessage at: positionIndex in: sourceCode 
 
 ]
 
+{ #category : #'accessing - model' }
+ProfilerInputPresenter >> setModelBeforeInitialization: aDomainObject [
+
+	viewModel := aDomainObject
+]
+
 { #category : #initialization }
 ProfilerInputPresenter >> subscribeOnProfilingAnnouncements [
-	viewModel announcer when: ProfilingStartedAnnouncement do: [ self error: 'to do: disable inputs' ].
+	viewModel announcer 
+		when: ProfilingStartedAnnouncement 
+		do: [ self enabled: false ];
+		
+		when: ProfilingFinishedAnnouncement 
+		do: [ self enabled: true ].
+	
 ]
 
 { #category : #initialization }

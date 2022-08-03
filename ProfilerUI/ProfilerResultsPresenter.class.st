@@ -20,14 +20,6 @@ Class {
 	#category : #'ProfilerUI-View'
 }
 
-{ #category : #'instance creation' }
-ProfilerResultsPresenter class >> withViewModel: aProfilerViewModel [
-	^ self basicNew
-		viewModel: aProfilerViewModel;
-		initialize;
-		yourself
-]
-
 { #category : #private }
 ProfilerResultsPresenter >> addToolbarItem: anItem [
 
@@ -82,7 +74,13 @@ ProfilerResultsPresenter >> handleProfilingFinished [
 	self updateSummaryText.
 	navigationBar removeAllItems.
 	navItem := self addToolbarItem: viewModel tallyRoot.
-	self selectToolbarItem: navItem
+	self selectToolbarItem: navItem.
+	self enabled: true
+]
+
+{ #category : #'event handling' }
+ProfilerResultsPresenter >> handleProfilingStarted [
+	self enabled: false
 ]
 
 { #category : #'event handling' }
@@ -204,9 +202,7 @@ ProfilerResultsPresenter >> newProfilerToolbar [
 { #category : #'private - factory' }
 ProfilerResultsPresenter >> newProfilerTreeTable [
 
-	^ (self instantiate: ProfilerTreeTablePresenter)
-		  viewModel: viewModel;
-		  yourself
+	^ ProfilerTreeTablePresenter on: viewModel
 ]
 
 { #category : #'private - factory' }
@@ -288,10 +284,18 @@ ProfilerResultsPresenter >> selectToolbarItem: anItem [
 	
 ]
 
+{ #category : #'accessing - model' }
+ProfilerResultsPresenter >> setModelBeforeInitialization: aDomainObject [
+
+	viewModel := aDomainObject
+]
+
 { #category : #subscription }
 ProfilerResultsPresenter >> subscribeOnProfilingAnnouncements [
 
 	viewModel announcer
+		when: ProfilingStartedAnnouncement 
+		do: [ self handleProfilingStarted ];
 		when: ProfilingFinishedAnnouncement
 		do: [ self handleProfilingFinished ];
 		when: ProfilerResultsTreeRootChangedAnnouncement 

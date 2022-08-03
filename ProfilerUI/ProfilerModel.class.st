@@ -23,6 +23,17 @@ ProfilerModel >> allProfilerClasses [
 	^ { AndreasSystemProfiler . TimeProfiler ". PreciseProfiler" }
 ]
 
+{ #category : #announce }
+ProfilerModel >> announceProfilingFinished [
+
+	^ self announcer announce: ProfilingFinishedAnnouncement new
+]
+
+{ #category : #announce }
+ProfilerModel >> announceProfilingStarted [
+	self announcer announce: ProfilingStartedAnnouncement new
+]
+
 { #category : #'event handling' }
 ProfilerModel >> browseItem [
 	self selectedNode ifNotNil: [:current | current browseItem ].
@@ -31,12 +42,12 @@ ProfilerModel >> browseItem [
 
 { #category : #constants }
 ProfilerModel >> doItSelectorsPath [
-	^ #( 'newProcess' 'runBlockAndProfile:' 'ensure:' 'DoIt' 'DoIt' )
+	^ #( 'newProcess' 'profileBlock:' 'ensure:' 'DoIt' 'DoIt' )
 ]
 
 { #category : #constants }
 ProfilerModel >> doItSourceCode [
-	^ 'self runBlockAndProfile: [self startProfiling. [' , code,'] value ]'
+	^ 'self profileBlock: [self startProfiling. [' , code,'] value ]'
 ]
 
 { #category : #reporting }
@@ -112,7 +123,7 @@ ProfilerModel >> menu: menu shifted: b [
 				argument: current .
 			menu addLine.
 			menu 
-				add: 'Go into node'
+				add: 'See as root'
 				target: self
 				selector: #setTallyRoot:
 				argument: current ].
@@ -134,6 +145,15 @@ ProfilerModel >> profileAllProcesses: aBoolean [
 	profileAllProcesses := aBoolean
 ]
 
+{ #category : #private }
+ProfilerModel >> profileBlock: aBlock [
+
+	[ self announceProfilingStarted.
+	aBlock ensure: [ 
+		self stopProfiling.
+		self announceProfilingFinished ] ] fork
+]
+
 { #category : #api }
 ProfilerModel >> profileCode: someCode notifying: requestor [
 
@@ -141,8 +161,6 @@ ProfilerModel >> profileCode: someCode notifying: requestor [
 	self isProfiling ifTrue: [ profiler stopProfiling ].
 	profiler := self newProfiler.
 	code := someCode.
-	
-	self announcer announce: ProfilingStartedAnnouncement new.
 	
 	compiledMethod := Smalltalk compiler
 		                  source: self doItSourceCode;
@@ -199,15 +217,6 @@ ProfilerModel >> rootTallyItemsOver: perCent [
 	^ (self tallyRoot sonsOver: minTally) 
 		ifEmpty: [ #() ]
 		ifNotEmpty: [:sons | sons asOrderedCollection sort reverse ] 
-]
-
-{ #category : #private }
-ProfilerModel >> runBlockAndProfile: aBlock [
-
-	[aBlock ensure: [ 
-		self stopProfiling.
-		self announcer announce:
-			(ProfilingFinishedAnnouncement new success: true) ]] fork
 ]
 
 { #category : #'accessing nodes' }
