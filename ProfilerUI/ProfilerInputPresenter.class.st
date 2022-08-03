@@ -24,7 +24,9 @@ ProfilerInputPresenter >> initializeActions [
 		viewModel profileAllProcesses: state ].
 
 	profileItButton action: [ 
-		viewModel profileCode: codeInput text notifying: self ]
+		codeInput text 
+			ifEmpty: [ self notify: 'Must enter code' at: 0 in: codeInput text ]
+			ifNotEmpty: [ viewModel profileCode: codeInput text notifying: self] ]
 ]
 
 { #category : #initialization }
@@ -40,8 +42,7 @@ ProfilerInputPresenter >> initializePresenters [
 
 	allProcessesCheckbox := self newCheckBox
 		                        label: 'Profile all processes';
-		                        state: viewModel profileAllProcesses;
-		                        enabled: false.
+		                        state: viewModel profileAllProcesses.
 
 	profileItButton := self newButton
 		                   icon: (self iconNamed: #glamorousGo);
@@ -70,7 +71,8 @@ ProfilerInputPresenter >> initializePresenters [
 { #category : #'error handling' }
 ProfilerInputPresenter >> notify: errorMessage at: positionIndex in: sourceCode [ 
 
-	codeInput notify: errorMessage at: positionIndex in: sourceCode 
+	codeInput notify: errorMessage at: positionIndex in: sourceCode .
+	codeInput takeKeyboardFocus
 
 ]
 
@@ -99,9 +101,4 @@ ProfilerInputPresenter >> unsubscribeFromProfilingAnnouncements [
 { #category : #accessing }
 ProfilerInputPresenter >> viewModel [
 	^ viewModel
-]
-
-{ #category : #accessing }
-ProfilerInputPresenter >> viewModel: aProfilerViewModel [ 
-	viewModel := aProfilerViewModel
 ]

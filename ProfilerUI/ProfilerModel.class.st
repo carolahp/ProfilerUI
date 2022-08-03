@@ -5,7 +5,6 @@ Class {
 	#name : #ProfilerModel,
 	#superclass : #MorphTreeModel,
 	#instVars : [
-		'code',
 		'profilerClass',
 		'profileAllProcesses',
 		'showLeavesOnly',
@@ -46,8 +45,8 @@ ProfilerModel >> doItSelectorsPath [
 ]
 
 { #category : #constants }
-ProfilerModel >> doItSourceCode [
-	^ 'self profileBlock: [self startProfiling. [' , code,'] value ]'
+ProfilerModel >> doItSourceCodeFrom: someCode [
+	^ 'self profileBlock: [self startProfiling. [ ', someCode ,' ] value ]'
 ]
 
 { #category : #reporting }
@@ -73,8 +72,8 @@ ProfilerModel >> initialize [
 	super initialize.
 	showLeavesOnly := false.
 	showNodeThreshold := 0.
-	profileAllProcesses := true.
-	code := '10000 factorial'
+	profileAllProcesses := false.
+	
 ]
 
 { #category : #accessing }
@@ -160,10 +159,9 @@ ProfilerModel >> profileCode: someCode notifying: requestor [
 	| compiledMethod |
 	self isProfiling ifTrue: [ profiler stopProfiling ].
 	profiler := self newProfiler.
-	code := someCode.
 	
 	compiledMethod := Smalltalk compiler
-		                  source: self doItSourceCode;
+		                  source: (self doItSourceCodeFrom: someCode);
 		                  context: nil;
 		                  requestor: requestor;
 		                  noPattern: true;

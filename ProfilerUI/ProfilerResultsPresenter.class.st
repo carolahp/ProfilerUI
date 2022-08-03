@@ -61,6 +61,7 @@ ProfilerResultsPresenter >> goInto: anItem [
 		            item object == anItem ])
 		           ifEmpty: [ self addToolbarItem: anItem ]
 		           ifNotEmpty: [ :result | result first ].
+
 	self selectToolbarItem: toolbarButton.
 	self updateResults
 ]
@@ -75,6 +76,7 @@ ProfilerResultsPresenter >> handleProfilingFinished [
 	navigationBar removeAllItems.
 	navItem := self addToolbarItem: viewModel tallyRoot.
 	self selectToolbarItem: navItem.
+	treeTable takeKeyboardFocus.
 	self enabled: true
 ]
 
@@ -112,17 +114,19 @@ ProfilerResultsPresenter >> initializeActions [
 	browseButton action: [ treeTable selectedItem browseItem ].
 	
 	"Configuration section actions"
-	collapseAllButton action: [ treeTable collapseAll ].
+	collapseAllButton action: [ treeTable collapseAll. treeTable takeKeyboardFocus ].
 
-	expandAllButton action: [ treeTable expandAll ].
+	expandAllButton action: [ treeTable expandAll. treeTable takeKeyboardFocus ].
 
-	thresholdExpandInput whenSubmitDo: [ :text |
-		treeTable collapseAll.
-		treeTable expandNodesOver: thresholdExpandInput number ].
+	thresholdExpandInput whenTextChangedDo: [ :text |
+		text asInteger ifNotNil: [ :limit | 
+			treeTable collapseAll.
+			treeTable expandNodesOver: limit ] ].
 
-	thresholdFilterInput whenSubmitDo: [ :text | 
-		treeTable hideNodesUnder: thresholdFilterInput number.
-		self updateResults ].	
+	thresholdFilterInput whenTextChangedDo: [ :text | 
+		text asInteger ifNotNil: [ :limit |
+			treeTable hideNodesUnder: limit.
+			self updateResults ] ].	
 	
 	treeDropList whenSelectedItemChangedDo: [ :item | 
 		viewModel showLeavesOnly: item value.
@@ -326,10 +330,4 @@ ProfilerResultsPresenter >> updateSummaryText [
 ProfilerResultsPresenter >> viewModel [
 
 	^ viewModel
-]
-
-{ #category : #accessing }
-ProfilerResultsPresenter >> viewModel: anObject [
-
-	viewModel := anObject
 ]

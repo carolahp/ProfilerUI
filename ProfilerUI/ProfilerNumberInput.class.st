@@ -23,8 +23,7 @@ ProfilerNumberInput >> initialize [
 ProfilerNumberInput >> initializePresenters [
 	self eventHandler
 		whenFocusLostDo: [
-			self text isNumber ifFalse: [ self number: 0 ].
-			self acceptText: self number asString ];
+			self text asInteger ifNil: [ "not a number" self number: 0 ] ];
 		whenFocusReceivedDo: [ self selectAll ];
 		whenMouseDownDo: [ :evt | self selectAll ].
 
