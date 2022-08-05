@@ -53,17 +53,21 @@ ProfilerResultsPresenter >> addToolbarItem: anItem [
 { #category : #private }
 ProfilerResultsPresenter >> goInto: anItem [
 
-	| toolbarButton |
-	self removeToolbarItemsAfter: navigationBar selectedItem.
+	| toolbarButtons clickedButton |
+	
+	toolbarButtons := navigationBar items select: [ :item | item object == anItem ].
+	
 	"Either the button in the navigationBar must be created (when going into an item in the treeTable)
 	or it already exists (when it was clicked)"
-	toolbarButton := (navigationBar items select: [ :item | 
-		            item object == anItem ])
-		           ifEmpty: [ self addToolbarItem: anItem ]
-		           ifNotEmpty: [ :result | result first ].
-
-	self selectToolbarItem: toolbarButton.
-	self updateResults
+	toolbarButtons 
+		ifEmpty: [ 
+			self removeToolbarItemsAfter: navigationBar selectedItem.
+			clickedButton := self addToolbarItem: anItem ]
+		ifNotEmpty: [clickedButton := toolbarButtons anyOne ].
+	
+	self selectToolbarItem: clickedButton.
+	self updateResults.
+	treeTable expandRoots
 ]
 
 { #category : #'event handling' }
