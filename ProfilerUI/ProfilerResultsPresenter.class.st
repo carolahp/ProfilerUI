@@ -67,15 +67,15 @@ ProfilerResultsPresenter >> goInto: anItem [
 	
 	self selectToolbarItem: clickedButton.
 	self updateResults.
-	treeTable expandRoots
+	treeTable expandAllSuchThat: [ :item | item weightToRoot asFloat closeTo: 100.0 ]
 ]
 
 { #category : #'event handling' }
 ProfilerResultsPresenter >> handleProfilingFinished [
 
 	| navItem |
-	self updateResults.
-	treeTable expandRoots.
+	self updateResults. 
+	treeTable expandAllSuchThat: [ :item | item weightToRoot asFloat closeTo: 100.0 ].
 	viewModel showLeavesOnly ifFalse: [ self selectDoItNode ].
 	self updateSummaryText.
 	navigationBar removeAllItems.
