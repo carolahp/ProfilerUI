@@ -110,7 +110,7 @@ ProfilerTreeTablePresenter >> setModelBeforeInitialization: aDomainObject [
 { #category : #'expanding-collapsing' }
 ProfilerTreeTablePresenter >> updateResults [
 
-	self roots: viewModel rootItems.
+	self roots: {viewModel rootItems}.
 	self refresh
 ]
 

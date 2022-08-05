@@ -14,7 +14,7 @@ QSystemTally >> asTallyModel [
 
 { #category : #'*ProfilerUI' }
 QSystemTally >> methodClassName [
-	^ class ifNil: [ '' ] ifNotNil: [ class name ] 
+	^ class ifNil: [ 'nil' ] ifNotNil: [ class name ] 
 ]
 
 { #category : #'*ProfilerUI' }

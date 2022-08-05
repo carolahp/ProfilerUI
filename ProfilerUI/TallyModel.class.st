@@ -111,7 +111,7 @@ TallyModel >> methodName [
 
 	^ item methodClassName , '>>' , (item method
 		   ifNotNil: [ item method selector ]
-		   ifNil: [ '' ])
+		   ifNil: [ 'nil' ])
 ]
 
 { #category : #querying }

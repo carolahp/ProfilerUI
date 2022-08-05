@@ -37,8 +37,7 @@ ProfilerInputPresenter >> initializePresenters [
 		                    help: 'Select the desired profiler.';
 		                    items: viewModel allProfilerClasses;
 		                    selectItem: viewModel profilerClass;
-		                    display: [ :each | each name ];
-		                    disable.
+		                    display: [ :each | each name ].
 
 	allProcessesCheckbox := self newCheckBox
 		                        label: 'Profile all processes';

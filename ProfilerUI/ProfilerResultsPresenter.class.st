@@ -28,18 +28,18 @@ ProfilerResultsPresenter >> addToolbarItem: anItem [
 	navItem
 		object: anItem;
 		label: anItem methodName;
-		help: 'Display ' , anItem methodName , ' as root';
+		help: 'Display ' , anItem methodName, ' as root';
 		action: [ 
 			|selectorsPath theNode|
 			navItem node ifNotNil: [ 
-				selectorsPath := navItem node path collect: [:item | item item method selector] ].
+				selectorsPath := navItem node path collect: [:item | item methodName] ].
 			
 			viewModel setTallyRoot: anItem.
 			selectorsPath ifNotNil: [ treeTable expandAllSuchThat: [ :item | | bool |
-					bool := (selectorsPath indexOf: item item method selector) > 0.
+					bool := (selectorsPath indexOf: item methodName) > 0.
 					bool ifTrue: [ theNode := item ].
 					bool ].
-				treeTable selectPath: theNode path scrollToSelection: true ] .
+				theNode ifNotNil: [ treeTable selectPath: theNode path scrollToSelection: true ] ] .
 			 ].
 		
 	navigationBar items ifNotEmpty: [ :items |
@@ -268,12 +268,12 @@ ProfilerResultsPresenter >> selectDoItNode [
 	
 	selectorsPath := viewModel doItSelectorsPath.
 	
-	
-	treeTable expandAllSuchThat: [ :item | | bool | 
-		bool := (selectorsPath indexOf: item item method selector) > 0.
+	treeTable expandAllSuchThat: [ :item | | bool selector |
+		selector := item methodName. 
+		bool := (selectorsPath indexOf: selector) > 0.
 		bool ifTrue: [ doItNode := item ].
 		bool ].
-	doItNode ifNil: [ self inform: 'Excecution was too fast!'. ^ self ].
+	doItNode ifNil: [ self inform: 'No measurements were taken because excecution time was too short.'. ^ self ].
 	treeTable selectNodePath: doItNode path.
 ]
 

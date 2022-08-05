@@ -34,3 +34,9 @@ ProfilerToolbarButtonPresenter >> object: anObject [
 
 	object := anObject
 ]
+
+{ #category : #printing }
+ProfilerToolbarButtonPresenter >> printOn: aStream [
+
+	aStream nextPutAll: self object methodName
+]

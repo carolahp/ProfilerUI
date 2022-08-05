@@ -41,7 +41,13 @@ ProfilerModel >> browseItem [
 
 { #category : #constants }
 ProfilerModel >> doItSelectorsPath [
-	^ #( 'newProcess' 'profileBlock:' 'ensure:' 'DoIt' 'DoIt' )
+
+	^ #( 'nil>>nil' 
+		  'FullBlockClosure>>newProcess'
+	     'ProfilerModel>>profileBlock:' 
+		  'FullBlockClosure>>ensure:'
+	     'ProfilerModel>>DoIt' 
+		  'ProfilerModel>>DoIt' )
 ]
 
 { #category : #constants }
@@ -187,11 +193,20 @@ ProfilerModel >> reset [
 ]
 
 { #category : #accessing }
-ProfilerModel >> rootItems [
+ProfilerModel >> rootItem [
+	^ self tallyRoot
+]
 
+{ #category : #accessing }
+ProfilerModel >> rootItems [
+	self tallyRoot ifNil: [ ^nil ].
+	
 	^ showLeavesOnly
 		  ifTrue: [ self leaveItemsOver: showNodeThreshold ]
-		  ifFalse: [ self rootTallyItemsOver: showNodeThreshold ]
+		  ifFalse: [ {self tallyRoot asTallyModel
+			  							model: self;
+			  							yourself} 
+						"self rootTallyItemsOver: showNodeThreshold" ]
 ]
 
 { #category : #accessing }
@@ -226,6 +241,7 @@ ProfilerModel >> rootTallyItemsOver: perCent [
 
 { #category : #'accessing nodes' }
 ProfilerModel >> setTallyRoot: anItem [
+
 	self tallyRoot: anItem item.
 	self announcer announce: (ProfilerResultsTreeRootChangedAnnouncement new item: anItem)
 ]
@@ -263,12 +279,14 @@ ProfilerModel >> stopProfiling [
 
 { #category : #'accessing nodes' }
 ProfilerModel >> tallyRoot [
-	profiler tallyRoot ifNil: [ ^nil ].
-		  
+
 	^ tallyRoot ifNil: [ 
-		  tallyRoot := profiler tallyRoot asTallyModel
-			               model: self;
-			               yourself ]
+		  tallyRoot := profiler tallyRoot 
+								ifNil: [ nil ] 
+								ifNotNil: [ :r | 
+			     			          r asTallyModel
+				       			        model: self;
+				          			     yourself ] ]
 ]
 
 { #category : #'accessing nodes' }
