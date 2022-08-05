@@ -71,6 +71,7 @@ ProfilerResultsPresenter >> handleProfilingFinished [
 
 	| navItem |
 	self updateResults.
+	treeTable expandRoots.
 	viewModel showLeavesOnly ifFalse: [ self selectDoItNode ].
 	self updateSummaryText.
 	navigationBar removeAllItems.
@@ -149,7 +150,6 @@ ProfilerResultsPresenter >> initializePresenters [
 						  (browseButton := self newBrowseButton))
 			 height: h;
 			 yourself).
-	self subscribeOnProfilingAnnouncements.
 	self initializeActions
 ]
 

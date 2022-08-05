@@ -64,7 +64,6 @@ ProfilerInputPresenter >> initializePresenters [
 		add: codeInput;
 		add: profileItButton.
 		
-	self subscribeOnProfilingAnnouncements.
 	self initializeActions
 ]
 

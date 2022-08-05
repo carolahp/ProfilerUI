@@ -19,7 +19,7 @@ ProfilerPresenter class >> open [
 	^ self new open
 ]
 
-{ #category : #initialization }
+{ #category : #constants }
 ProfilerPresenter >> initExtent [
 	^ 800 @ 800
 ]
@@ -29,7 +29,10 @@ ProfilerPresenter >> initializePresenters [
 
 	self layout: (SpBoxLayout newTopToBottom
 			 add: (inputPresenter := self newInputPresenter) height: 100;
-			 add: (resultsPresenter := self newResultsPresenter) expand: true;
+			 add: (resultsPresenter := self newResultsPresenter
+					                      enabled: false;
+					                      yourself)
+			 expand: true;
 			 yourself)
 ]
 
@@ -39,27 +42,36 @@ ProfilerPresenter >> initializeWindow: aWindowPresenter [
 		title: self presenterTitle;
 		initialExtent: self initExtent;
 		windowIcon: self windowIcon;
+		whenOpenedDo: [ self subscribe ];
 		whenClosedDo: [ self unsubscribe ]
 ]
 
-{ #category : #initialization }
+{ #category : #'private - factory' }
 ProfilerPresenter >> newInputPresenter [
 
 	^ ProfilerInputPresenter on: self viewModel
 ]
 
-{ #category : #initialization }
+{ #category : #'private - factory' }
 ProfilerPresenter >> newResultsPresenter [
 
 	^ ProfilerResultsPresenter on: self viewModel
 ]
 
-{ #category : #accessing }
+{ #category : #constants }
 ProfilerPresenter >> presenterTitle [
 	^ 'Profiler'
 ]
 
-{ #category : #initialization }
+{ #category : #subscription }
+ProfilerPresenter >> subscribe [
+	
+	resultsPresenter subscribeOnProfilingAnnouncements.
+	inputPresenter subscribeOnProfilingAnnouncements
+	
+]
+
+{ #category : #subscription }
 ProfilerPresenter >> unsubscribe [
 	
 	resultsPresenter unsubscribeFromProfilingAnnouncements.
