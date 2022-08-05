@@ -83,6 +83,9 @@ ProfilerResultsPresenter >> handleProfilingFinished [
 
 { #category : #'event handling' }
 ProfilerResultsPresenter >> handleProfilingStarted [
+	
+	viewModel reset.
+	treeTable resetContents.
 	self enabled: false
 ]
 

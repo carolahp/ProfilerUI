@@ -73,7 +73,7 @@ ProfilerModel >> initialize [
 	showLeavesOnly := false.
 	showNodeThreshold := 0.
 	profileAllProcesses := false.
-	
+	self reset
 ]
 
 { #category : #accessing }
@@ -103,6 +103,7 @@ ProfilerModel >> leaveItems [
 ProfilerModel >> leaveItemsOver: perCent [
 
 	| leaveThreshold |
+	self tallyRoot ifNil: [ ^ nil ].
 	leaveThreshold := (perCent asFloat / 100 * self tallyRoot tally) rounded.
 	^ self leaveItems select: [ :item | item tally > leaveThreshold ]
 ]
@@ -180,6 +181,11 @@ ProfilerModel >> profilerClass: aClass [
 	profilerClass := aClass
 ]
 
+{ #category : #initialization }
+ProfilerModel >> reset [
+	tallyRoot := nil
+]
+
 { #category : #accessing }
 ProfilerModel >> rootItems [
 
@@ -210,6 +216,7 @@ ProfilerModel >> rootTallyItems [
 { #category : #'accessing nodes' }
 ProfilerModel >> rootTallyItemsOver: perCent [
 	| minTally |
+	self tallyRoot ifNil: [ ^ nil ].
 	minTally := (perCent asFloat / 100 * self tallyRoot tally) rounded.
 	
 	^ (self tallyRoot sonsOver: minTally) 
@@ -256,7 +263,8 @@ ProfilerModel >> stopProfiling [
 
 { #category : #'accessing nodes' }
 ProfilerModel >> tallyRoot [
-
+	profiler tallyRoot ifNil: [ ^nil ].
+		  
 	^ tallyRoot ifNil: [ 
 		  tallyRoot := profiler tallyRoot asTallyModel
 			               model: self;

@@ -72,6 +72,12 @@ ProfilerTreeTablePresenter >> initialize [
 				   yourself)"
 ]
 
+{ #category : #updating }
+ProfilerTreeTablePresenter >> resetContents [
+	self withAdapterPerformOrDefer: [ :anAdapter |
+		anAdapter widget buildContents ]
+]
+
 { #category : #selection }
 ProfilerTreeTablePresenter >> selectNodePath: aCollection [ 
 
