@@ -16,6 +16,12 @@ ProfilerTreeTablePresenter class >> adapterName [
 	^ #ProfilerTreeTableAdapter
 ]
 
+{ #category : #selection }
+ProfilerTreeTablePresenter >> emptySelection [
+	self withAdapterPerformOrDefer: [ :anAdapter |
+		 anAdapter widget emptySelection ]
+]
+
 { #category : #'expanding-collapsing' }
 ProfilerTreeTablePresenter >> expandAllSuchThat: aBlock [
 
@@ -25,57 +31,72 @@ ProfilerTreeTablePresenter >> expandAllSuchThat: aBlock [
 
 { #category : #'expanding-collapsing' }
 ProfilerTreeTablePresenter >> expandNodesOver: aNumber [
-
-	self expandAllSuchThat: [ :item | 
-		item weight >= aNumber ].
-	self refresh
+	self rememberingSelectedNodeDo: [ 
+		self collapseAll.
+		self expandAllSuchThat: [ :item | item weight asFloat >= aNumber asFloat ] ]
 ]
 
 { #category : #'expanding-collapsing' }
-ProfilerTreeTablePresenter >> hideNodesUnder: aNumber [ 
-	viewModel hideNodesUnder: aNumber.
+ProfilerTreeTablePresenter >> hideNodesUnder: aNumber [
+
+	self rememberingExpandedAndSelectedNodesDo: [ 
+		viewModel hideNodesUnder: aNumber asFloat.
+		self updateResults ]
 ]
 
 { #category : #initialization }
 ProfilerTreeTablePresenter >> initialize [
 	super initialize.
+	"the column below is created only to prevent the TreeTableMorph from creating an additional column"
 	self addColumn: (SpCompositeTableColumn new
-				   addColumn: (SpImageTableColumn evaluated: [ :item | self iconNamed: item icon ]);
 				   addColumn: (SpStringTableColumn
 						    title: 'Method or Block'
 						    evaluated: [ :item | item reportString ]);
-				   yourself).
-		  "children: [ :item | 
-			  | perCent |
-			  perCent := viewModel showNodeThreshold.
-			  (item sonsOver: perCent) asOrderedCollection sort reverse ];"
-		  "bindKeyCombination: Character arrowLeft asKeyCombination
-		  toAction: [ self handleArrowLeft ];
-		  bindKeyCombination: Character arrowRight asKeyCombination
-		  toAction: [ self handleArrowRight ];"
-		  
-		  "addColumn:
-			  ((SpStringTableColumn title: 'Tally' evaluated: #tally)
-				   width: 200;
-				   yourself);""addColumn:
-			  (SpLinkTableColumn new
-					title: 'Go into';
-					width: 70;
-					evaluated: [ :node | '->' ];
-					action: [ :node | treeTable selectItem: node. self goInto  ];
-					yourself);""addColumn: (SpLinkTableColumn new
-				   title: 'Go';
-				   width: 70;
-				   evaluated: [ :aNode | '->' ];
-				   action: [ :aNode |  attributeTable toggleFilter: aNode variableTag. owner updateHeaderBar. ];
-				   sortFunction: #variableTag ascending;
-				   yourself)"
+				   yourself)
+]
+
+{ #category : #'expanding-collapsing' }
+ProfilerTreeTablePresenter >> rememberingExpandedAndSelectedNodesDo: aBlock [
+
+	self rememberingSelectedNodeDo: [ 
+		self rememberingExpandedNodesDo: aBlock ]
+]
+
+{ #category : #'expanding-collapsing' }
+ProfilerTreeTablePresenter >> rememberingExpandedNodesDo: aBlock [
+
+	| expanded |
+	self withAdapterPerformOrDefer: [ :anAdapter | 
+		expanded := anAdapter widget currentlyExpanded.
+		aBlock value.
+		expanded do: [ :n | anAdapter widget expandNodePath: n path ] ]
+]
+
+{ #category : #selection }
+ProfilerTreeTablePresenter >> rememberingSelectedNodeDo: aBlock [
+
+	| selected widget |
+	self withAdapterPerformOrDefer: [ :anAdapter | 
+		widget := anAdapter widget.
+		selected := widget selectedMorph complexContents.
+		aBlock value.
+
+		widget emptySelection.
+		selected ifNotNil: [ 
+			widget selectNodePath: selected path. 
+			widget scrollSelectionIntoView ] ]
 ]
 
 { #category : #updating }
 ProfilerTreeTablePresenter >> resetContents [
 	self withAdapterPerformOrDefer: [ :anAdapter |
 		anAdapter widget buildContents ]
+]
+
+{ #category : #scrolling }
+ProfilerTreeTablePresenter >> scrollSelectionIntoView [
+	self withAdapterPerformOrDefer: [ :anAdapter |
+		anAdapter widget scrollSelectionIntoView ]
 ]
 
 { #category : #selection }

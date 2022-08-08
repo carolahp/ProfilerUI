@@ -62,11 +62,6 @@ ProfilerModel >> doReport [
 		profiler report: s cutoff: 0 ]
 ]
 
-{ #category : #'help-text' }
-ProfilerModel >> helpText [
-	^ 'Method, Block or Primitive node'
-]
-
 { #category : #api }
 ProfilerModel >> hideNodesUnder: aNumber [
 	"minimum percentage a node must have to be shown"

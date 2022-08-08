@@ -5,7 +5,6 @@ Class {
 	#name : #ProfilerResultsPresenter,
 	#superclass : #SpPresenter,
 	#instVars : [
-		'navigationBar',
 		'treeTable',
 		'summaryText',
 		'viewModel',
@@ -15,72 +14,57 @@ Class {
 		'expandAllButton',
 		'collapseAllButton',
 		'thresholdFilterInput',
-		'thresholdExpandInput'
+		'thresholdExpandInput',
+		'navigationToolbar'
 	],
 	#category : #'ProfilerUI-View'
 }
 
 { #category : #private }
-ProfilerResultsPresenter >> addToolbarItem: anItem [
-
-	| navItem |
-	navItem := ProfilerToolbarButtonPresenter new.
-	navItem
-		object: anItem;
-		label: anItem methodName;
-		help: 'Display ' , anItem methodName, ' as root';
-		action: [ 
-			|selectorsPath theNode|
-			navItem node ifNotNil: [ 
-				selectorsPath := navItem node path collect: [:item | item methodName] ].
-			
-			viewModel setTallyRoot: anItem.
-			selectorsPath ifNotNil: [ treeTable expandAllSuchThat: [ :item | | bool |
-					bool := (selectorsPath indexOf: item methodName) > 0.
-					bool ifTrue: [ theNode := item ].
-					bool ].
-				theNode ifNotNil: [ treeTable selectPath: theNode path scrollToSelection: true ] ] .
-			 ].
-		
-	navigationBar items ifNotEmpty: [ :items |
-		items last node: treeTable selectedItem ].
-	
-	
-	navigationBar addItem: navItem.
-	^ navItem
-]
-
-{ #category : #private }
-ProfilerResultsPresenter >> goInto: anItem [
+ProfilerResultsPresenter >> goInto: aNode [
 
 	| toolbarButtons clickedButton |
-	
-	toolbarButtons := navigationBar items select: [ :item | item object == anItem ].
-	
-	"Either the button in the navigationBar must be created (when going into an item in the treeTable)
-	or it already exists (when it was clicked)"
-	toolbarButtons 
-		ifEmpty: [ 
-			self removeToolbarItemsAfter: navigationBar selectedItem.
-			clickedButton := self addToolbarItem: anItem ]
-		ifNotEmpty: [clickedButton := toolbarButtons anyOne ].
-	
-	self selectToolbarItem: clickedButton.
+	toolbarButtons := navigationToolbar items select: [ :item | 
+		                  item object == aNode ].
+
+	toolbarButtons
+		ifEmpty: [ "Either the button in the navigationBar must be created 
+			(ie, 'see as root' in the context menu was clicked)"
+			self removeToolbarItemsAfter: navigationToolbar selectedItem.
+			clickedButton := self newToolbarButtonFrom: aNode.
+			navigationToolbar addItem: clickedButton ]
+		ifNotEmpty: [ "or it already exists (ie, the toolbar button was clicked)"
+			clickedButton := toolbarButtons anyOne.
+			clickedButton == navigationToolbar selectedItem ifTrue: [ ^ self ] ].
+
 	self updateResults.
-	treeTable expandAllSuchThat: [ :item | item weightToRoot asFloat closeTo: 100.0 ]
+	self selectToolbarItem: clickedButton.
+	
+	toolbarButtons
+		ifEmpty: [ 
+			treeTable expandAllSuchThat: [ :item | 
+				item weightToRoot asFloat closeTo: 100.0 ].
+			treeTable adapter widget allNodeMorphs ifNotEmpty: [ :nodes |
+				"select node displayed as root" 
+				treeTable selectNodePath: nodes first complexContents path ] ]
+		ifNotEmpty: [ 
+			treeTable expandPath: clickedButton selectedPath.
+			treeTable scrollSelectionIntoView ]
 ]
 
 { #category : #'event handling' }
 ProfilerResultsPresenter >> handleProfilingFinished [
 
-	| navItem |
+	| toolbarButton |
 	self updateResults. 
 	treeTable expandAllSuchThat: [ :item | item weightToRoot asFloat closeTo: 100.0 ].
 	viewModel showLeavesOnly ifFalse: [ self selectDoItNode ].
 	self updateSummaryText.
-	navigationBar removeAllItems.
-	navItem := self addToolbarItem: viewModel tallyRoot.
-	self selectToolbarItem: navItem.
+	navigationToolbar removeAllItems.
+	toolbarButton := self newToolbarButtonFrom: viewModel tallyRoot.
+	navigationToolbar addItem: toolbarButton.
+	self selectToolbarItem: toolbarButton.
+	
 	treeTable takeKeyboardFocus.
 	self enabled: true
 ]
@@ -109,33 +93,34 @@ ProfilerResultsPresenter >> handleSelectionChange: item [
 		ifNotNil: [ 
 			browseButton enable.
 			codePresenter methodOrBlock: item item methodOrBlock.
-			navigationBar selectedItem ifNotNil: [ :btn | 
-				btn object item = treeTable selectedItem item ifFalse: [ 
-					btn node: treeTable selectedItem ] ] ]
+			navigationToolbar selectedItem ifNotNil: [ :btn | 
+				btn selectedPath: item path ] ]
 ]
 
 { #category : #initialization }
 ProfilerResultsPresenter >> initializeActions [
 
-	treeTable whenSelectedItemChangedSend: #handleSelectionChange to: self.
+	treeTable
+		whenSelectedItemChangedSend: #handleSelectionChange
+		to: self.
 	"Code section actions"
 	browseButton action: [ treeTable selectedItem browseItem ].
-	
+
 	"Configuration section actions"
-	collapseAllButton action: [ treeTable collapseAll. treeTable takeKeyboardFocus ].
+	collapseAllButton action: [ 
+		treeTable collapseAll.
+		treeTable takeKeyboardFocus ].
 
-	expandAllButton action: [ treeTable expandAll. treeTable takeKeyboardFocus ].
+	expandAllButton action: [ 
+		treeTable expandAll.
+		treeTable takeKeyboardFocus ].
 
-	thresholdExpandInput whenTextChangedDo: [ :text |
-		text asInteger ifNotNil: [ :limit | 
-			treeTable collapseAll.
-			treeTable expandNodesOver: limit ] ].
+	thresholdExpandInput whenTextChangedDo: [ :text | 
+		text asInteger ifNotNil: [ treeTable expandNodesOver: text asNumber ] ].
 
 	thresholdFilterInput whenTextChangedDo: [ :text | 
-		text asInteger ifNotNil: [ :limit |
-			treeTable hideNodesUnder: limit.
-			self updateResults ] ].	
-	
+		text asInteger ifNotNil: [ treeTable hideNodesUnder: text asNumber ] ].
+
 	treeDropList whenSelectedItemChangedDo: [ :item | 
 		viewModel showLeavesOnly: item value.
 		self updateResults ]
@@ -149,7 +134,7 @@ ProfilerResultsPresenter >> initializePresenters [
 
 	self layout: (SpBoxLayout newTopToBottom
 			 add: (summaryText := self newLabel label: 'Reporting ') height: h;
-			 add: (navigationBar := self newProfilerToolbar) height: h;
+			 add: (navigationToolbar := self newProfilerToolbar) height: h;
 			 add: (treeTable := self newProfilerTreeTable);
 			 add: self newConfigurationSectionLayout height: h * 3;
 			 add: (codePresenter := self newProfilerCode);
@@ -235,6 +220,23 @@ ProfilerResultsPresenter >> newThresholdFilterInput [
 ]
 
 { #category : #'private - factory' }
+ProfilerResultsPresenter >> newToolbarButtonFrom: anItem [
+
+	| button |
+	button := ProfilerToolbarButtonPresenter new.
+	button
+		object: anItem;
+		label: anItem methodName;
+		help: 'Display ' , anItem methodName , ' as root';
+		action: [ 
+			viewModel setTallyRoot: anItem.
+			treeTable expandPath: button selectedPath.
+			treeTable scrollSelectionIntoView ].
+
+	^ button
+]
+
+{ #category : #'private - factory' }
 ProfilerResultsPresenter >> newTreeVisualizationDropList [
 	| items |
 	items := { 
@@ -257,12 +259,12 @@ ProfilerResultsPresenter >> removeToolbarItemsAfter: anItem [
 	toKeep := #() asOrderedCollection.
 	i := 1.
 	[ 
-	item := navigationBar items at: i.
+	item := navigationToolbar items at: i.
 	toKeep add: item.
 	i := i + 1.
 	item isNotNil and: [ item = anItem ] ] whileFalse.
-	navigationBar removeAllItems.
-	toKeep do: [ :itm | navigationBar addItem: itm ]
+	navigationToolbar removeAllItems.
+	toKeep do: [ :itm | navigationToolbar addItem: itm ]
 ]
 
 { #category : #private }
@@ -284,14 +286,15 @@ ProfilerResultsPresenter >> selectDoItNode [
 { #category : #private }
 ProfilerResultsPresenter >> selectToolbarItem: anItem [
 	| items | 
-	navigationBar items do: [:itm | itm icon: nil ].
+	navigationToolbar items do: [:itm | itm icon: nil ].
 	anItem icon: (self iconNamed: 'windowMenu').
 	
-	items := navigationBar items.
+	items := navigationToolbar items.
+	
 	"ugly hack to force the ui refresh"
-	navigationBar removeAllItems.
-	items do: [ :itm | navigationBar addItem: itm ].
-	navigationBar selectedItem: anItem.
+	navigationToolbar removeAllItems.
+	items do: [ :itm | navigationToolbar addItem: itm ].
+	navigationToolbar selectedItem: anItem.
 	
 ]
 

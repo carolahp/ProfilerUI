@@ -12,6 +12,14 @@ TallyModel >> <= aTallyModelAndreas [
 	^ self item tally <= aTallyModelAndreas item tally
 ]
 
+{ #category : #comparing }
+TallyModel >> = aTallyModel [
+
+	^ self item tally = aTallyModel item tally and: [ 
+		  self item class = aTallyModel item class and: [ 
+			self item method = aTallyModel item method ] ]
+]
+
 { #category : #converting }
 TallyModel >> asString [
 	^ self reportString

@@ -105,16 +105,15 @@ SpMorphicProfilerTreeTableAdapter >> expandAll [
 ]
 
 { #category : #accessing }
+SpMorphicProfilerTreeTableAdapter >> expandPath: anArray [ 
+	
+	widget expandNodePath: anArray
+]
+
+{ #category : #accessing }
 SpMorphicProfilerTreeTableAdapter >> expandRoots [
 
 	widget expandRoots
-]
-
-{ #category : #'private - factory' }
-SpMorphicProfilerTreeTableAdapter >> newColumnFrom: anObject [
-	
-	^ MorphTreeColumn new 
-		rowMorphGetSelector: [:node | StringMorph contents: node item asString].
 ]
 
 { #category : #updating }

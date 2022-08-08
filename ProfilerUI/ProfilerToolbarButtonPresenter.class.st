@@ -6,22 +6,10 @@ Class {
 	#superclass : #SpToolbarButtonPresenter,
 	#instVars : [
 		'object',
-		'node'
+		'selectedPath'
 	],
 	#category : #'ProfilerUI-View'
 }
-
-{ #category : #accessing }
-ProfilerToolbarButtonPresenter >> node [
-
-	^ node
-]
-
-{ #category : #accessing }
-ProfilerToolbarButtonPresenter >> node: anObject [
-
-	node := anObject
-]
 
 { #category : #accessing }
 ProfilerToolbarButtonPresenter >> object [
@@ -39,4 +27,15 @@ ProfilerToolbarButtonPresenter >> object: anObject [
 ProfilerToolbarButtonPresenter >> printOn: aStream [
 
 	aStream nextPutAll: self object methodName
+]
+
+{ #category : #accessing }
+ProfilerToolbarButtonPresenter >> selectedPath [
+	^ selectedPath
+]
+
+{ #category : #accessing }
+ProfilerToolbarButtonPresenter >> selectedPath: aCollection [ 
+
+	selectedPath := aCollection
 ]
