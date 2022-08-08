@@ -52,7 +52,7 @@ ProfilerModel >> doItSelectorsPath [
 
 { #category : #constants }
 ProfilerModel >> doItSourceCodeFrom: someCode [
-	^ 'self profileBlock: [self startProfiling. [ ', someCode ,' ] value ]'
+	^ 'self profileBlock: [self startProfiling. ',(profiler blockCodeFrom: someCode),' ]'
 ]
 
 { #category : #reporting }
@@ -232,6 +232,12 @@ ProfilerModel >> rootTallyItemsOver: perCent [
 	^ (self tallyRoot sonsOver: minTally) 
 		ifEmpty: [ #() ]
 		ifNotEmpty: [:sons | sons asOrderedCollection sort reverse ] 
+]
+
+{ #category : #'private - running' }
+ProfilerModel >> runBlock: aBlock [
+	"Time Profiler is assumed"
+	^ profiler runBlock: aBlock
 ]
 
 { #category : #'accessing nodes' }

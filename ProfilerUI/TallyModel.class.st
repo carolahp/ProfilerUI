@@ -122,6 +122,11 @@ TallyModel >> methodName [
 		   ifNil: [ 'nil' ])
 ]
 
+{ #category : #accessing }
+TallyModel >> methodOrBlock [
+	^ item method
+]
+
 { #category : #querying }
 TallyModel >> reportString [
 

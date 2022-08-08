@@ -6,3 +6,8 @@ Class {
 	#superclass : #TallyModel,
 	#category : #'ProfilerUI-Model'
 }
+
+{ #category : #accessing }
+TallyModelAndreas >> methodOrBlock [
+	^ item methodOrBlock
+]

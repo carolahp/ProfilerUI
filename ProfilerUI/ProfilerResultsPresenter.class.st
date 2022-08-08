@@ -92,7 +92,7 @@ ProfilerResultsPresenter >> handleSelectionChange: item [
 			codePresenter methodOrBlock: nil ]
 		ifNotNil: [ 
 			browseButton enable.
-			codePresenter methodOrBlock: item item methodOrBlock.
+			codePresenter methodOrBlock: item methodOrBlock.
 			navigationToolbar selectedItem ifNotNil: [ :btn | 
 				btn selectedPath: item path ] ]
 ]
@@ -123,7 +123,10 @@ ProfilerResultsPresenter >> initializeActions [
 
 	treeDropList whenSelectedItemChangedDo: [ :item | 
 		viewModel showLeavesOnly: item value.
-		self updateResults ]
+		self updateResults.
+		viewModel showLeavesOnly ifFalse: [ 
+			treeTable expandAllSuchThat: [ :node |
+				node weightToRoot asFloat closeTo: 100.0 ] ] ]
 ]
 
 { #category : #initialization }
