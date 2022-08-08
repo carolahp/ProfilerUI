@@ -10,7 +10,5 @@ Class {
 { #category : #accessing }
 TallyModelTime >> methodName [
 
-	^ item method class asString, '>>' , (item method
-		   ifNotNil: [ item method selector ]
-		   ifNil: [ 'nil' ])
+	^ item method methodClass name, '>>' , item method selector asString
 ]
