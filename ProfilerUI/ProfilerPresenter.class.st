@@ -13,6 +13,17 @@ Class {
 }
 
 { #category : #examples }
+ProfilerPresenter class >> menuCommandOn: aBuilder [ 
+	<worldMenu>
+	(aBuilder item: #'Andreas & Time Profiler')
+		parent: #Profiling;  
+		order: 1;
+		icon: (self iconNamed: #smallProfile);
+		help: 'Profile the execution of a piece of code and navigate into the result.';
+		action: [self new open]
+]
+
+{ #category : #examples }
 ProfilerPresenter class >> open [
 
 	<example>
