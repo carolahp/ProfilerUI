@@ -6,6 +6,17 @@ TimeProfiler >> blockCodeFrom: aString [
 ]
 
 { #category : #'*ProfilerUI' }
+TimeProfiler >> doItSelectorsPath [
+	^ #('UndefinedObject>>DoIt')
+]
+
+{ #category : #'*ProfilerUI' }
+TimeProfiler >> report [
+
+	^ self fullReport
+]
+
+{ #category : #'*ProfilerUI' }
 TimeProfiler >> startProfiling [
 	"Created for compatibility with Andreas Profiler"
 ]

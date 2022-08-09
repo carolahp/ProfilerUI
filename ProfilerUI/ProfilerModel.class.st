@@ -6,7 +6,6 @@ Class {
 	#superclass : #MorphTreeModel,
 	#instVars : [
 		'profilerClass',
-		'profileAllProcesses',
 		'showLeavesOnly',
 		'showNodeThreshold',
 		'profiler',
@@ -41,25 +40,13 @@ ProfilerModel >> browseItem [
 
 { #category : #constants }
 ProfilerModel >> doItSelectorsPath [
-
-	^ #( 'nil>>nil' 
-		  'FullBlockClosure>>newProcess'
-	     'ProfilerModel>>profileBlock:' 
-		  'FullBlockClosure>>ensure:'
-	     'ProfilerModel>>DoIt' 
-		  'ProfilerModel>>DoIt' )
+	
+	^ profiler doItSelectorsPath
 ]
 
 { #category : #constants }
 ProfilerModel >> doItSourceCodeFrom: someCode [
 	^ 'self profileBlock: [self startProfiling. ',(profiler blockCodeFrom: someCode),' ]'
-]
-
-{ #category : #reporting }
-ProfilerModel >> doReport [
-	
-	^ String streamContents: [ :s | 
-		profiler report: s cutoff: 0 ]
 ]
 
 { #category : #api }
@@ -73,7 +60,6 @@ ProfilerModel >> initialize [
 	super initialize.
 	showLeavesOnly := false.
 	showNodeThreshold := 0.
-	profileAllProcesses := false.
 	self reset
 ]
 
@@ -136,16 +122,6 @@ ProfilerModel >> newProfiler [
 	^ self profilerClass new
 ]
 
-{ #category : #accessing }
-ProfilerModel >> profileAllProcesses [
-	^ profileAllProcesses
-]
-
-{ #category : #accessing }
-ProfilerModel >> profileAllProcesses: aBoolean [
-	profileAllProcesses := aBoolean
-]
-
 { #category : #private }
 ProfilerModel >> profileBlock: aBlock [
 
@@ -180,6 +156,12 @@ ProfilerModel >> profilerClass [
 { #category : #accessing }
 ProfilerModel >> profilerClass: aClass [
 	profilerClass := aClass
+]
+
+{ #category : #reporting }
+ProfilerModel >> report [
+	
+	^ profiler report
 ]
 
 { #category : #initialization }

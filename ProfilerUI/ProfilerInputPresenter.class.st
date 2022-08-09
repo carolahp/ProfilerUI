@@ -6,7 +6,6 @@ Class {
 	#superclass : #SpPresenter,
 	#instVars : [
 		'profilerDropList',
-		'allProcessesCheckbox',
 		'profileItButton',
 		'codeInput',
 		'viewModel'
@@ -20,8 +19,6 @@ ProfilerInputPresenter >> initializeActions [
 	profilerDropList whenSelectedItemChangedDo: [ :item | 
 		viewModel profilerClass: item ].
 
-	allProcessesCheckbox whenChangedDo: [ :state | 
-		viewModel profileAllProcesses: state ].
 
 	profileItButton action: [ 
 		codeInput text 
@@ -31,6 +28,7 @@ ProfilerInputPresenter >> initializeActions [
 
 { #category : #initialization }
 ProfilerInputPresenter >> initializePresenters [
+
 	codeInput := self newCode beForScripting.
 
 	profilerDropList := self newDropList
@@ -39,30 +37,26 @@ ProfilerInputPresenter >> initializePresenters [
 		                    selectItem: viewModel profilerClass;
 		                    display: [ :each | each name ].
 
-	allProcessesCheckbox := self newCheckBox
-		                        label: 'Profile all processes';
-		                        state: viewModel profileAllProcesses.
-
 	profileItButton := self newButton
 		                   icon: (self iconNamed: #glamorousGo);
 		                   label: 'Profile it'.
-	
-	self layout: (SpBoxLayout newLeftToRight
-			 add: codeInput;
-			 add: (SpBoxLayout newTopToBottom
-					  add: profilerDropList;
-					  add: allProcessesCheckbox;
-					  add: profileItButton;
+
+	self layout: (SpBoxLayout newTopToBottom
+			 add: (SpBoxLayout newLeftToRight
+					  add: profileItButton height: self class toolbarHeight;
+					  add: profilerDropList height: self class buttonHeight;
 					  yourself)
 			 expand: false
 			 fill: false
 			 padding: 5;
+			
+			 add: codeInput height: self class toolbarHeight*10;
 			 yourself).
 
 	self focusOrder
 		add: codeInput;
 		add: profileItButton.
-		
+
 	self initializeActions
 ]
 

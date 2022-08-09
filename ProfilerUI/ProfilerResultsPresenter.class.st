@@ -6,7 +6,6 @@ Class {
 	#superclass : #SpPresenter,
 	#instVars : [
 		'treeTable',
-		'summaryText',
 		'viewModel',
 		'codePresenter',
 		'browseButton',
@@ -15,7 +14,8 @@ Class {
 		'collapseAllButton',
 		'thresholdFilterInput',
 		'thresholdExpandInput',
-		'navigationToolbar'
+		'navigationToolbar',
+		'reportButton'
 	],
 	#category : #'ProfilerUI-View'
 }
@@ -59,7 +59,6 @@ ProfilerResultsPresenter >> handleProfilingFinished [
 	self updateResults. 
 	treeTable expandAllSuchThat: [ :item | item weightToRoot asFloat closeTo: 100.0 ].
 	viewModel showLeavesOnly ifFalse: [ self selectDoItNode ].
-	self updateSummaryText.
 	navigationToolbar removeAllItems.
 	toolbarButton := self newToolbarButtonFrom: viewModel tallyRoot.
 	navigationToolbar addItem: toolbarButton.
@@ -105,7 +104,8 @@ ProfilerResultsPresenter >> initializeActions [
 		to: self.
 	"Code section actions"
 	browseButton action: [ treeTable selectedItem browseItem ].
-
+	"Report"
+	reportButton action: [ UIManager default edit: viewModel report label: 'Profiling Report'. ].
 	"Configuration section actions"
 	collapseAllButton action: [ 
 		treeTable collapseAll.
@@ -136,15 +136,21 @@ ProfilerResultsPresenter >> initializePresenters [
 	h := self class toolbarHeight.
 
 	self layout: (SpBoxLayout newTopToBottom
-			 add: (summaryText := self newLabel label: 'Reporting ') height: h;
 			 add: (navigationToolbar := self newProfilerToolbar) height: h;
 			 add: (treeTable := self newProfilerTreeTable);
-			 add: self newConfigurationSectionLayout height: h * 3;
+			 add: self newConfigurationSectionLayout height: h * 2.5;
 			 add: (codePresenter := self newProfilerCode);
-			 add: (SpBoxLayout newLeftToRight addLast:
-						  (browseButton := self newBrowseButton))
+			 add: (SpBoxLayout newLeftToRight
+					  add: (reportButton := self newReportButton)
+					  withConstraints: [ :constraints | 
+						  constraints
+							   bePlacedAtStart;
+							   fill: true;
+							   expand: false ];
+					  addLast: (browseButton := self newBrowseButton))
 			 height: h;
 			 yourself).
+	"add: (summaryText := self newLabel label: 'Reporting ') height: h;"
 	self initializeActions
 ]
 
@@ -162,7 +168,6 @@ ProfilerResultsPresenter >> newBrowseButton [
 ProfilerResultsPresenter >> newConfigurationSectionLayout [
 
 	^ (SpBoxLayout newTopToBottom
-			 add: (self newLabel label: 'Configure results display');
 			 add: (SpBoxLayout newLeftToRight
 					  add: (treeDropList := self newTreeVisualizationDropList);
 					  add: (expandAllButton := self newButton label: 'Expand All') width: 100;
@@ -205,6 +210,16 @@ ProfilerResultsPresenter >> newProfilerTreeTable [
 ]
 
 { #category : #'private - factory' }
+ProfilerResultsPresenter >> newReportButton [
+
+	^ self newButton
+		icon: (self iconNamed: #recentMessages);
+		label: 'Full Report';
+		disable;
+		yourself
+]
+
+{ #category : #'private - factory' }
 ProfilerResultsPresenter >> newThresholdExpandInput [
 
 	^ self newProfilerNumberInput
@@ -230,6 +245,7 @@ ProfilerResultsPresenter >> newToolbarButtonFrom: anItem [
 	button
 		object: anItem;
 		label: anItem methodName;
+		selectedPath: anItem path;
 		help: 'Display ' , anItem methodName , ' as root';
 		action: [ 
 			viewModel setTallyRoot: anItem.
@@ -327,16 +343,10 @@ ProfilerResultsPresenter >> unsubscribeFromProfilingAnnouncements [
 
 { #category : #update }
 ProfilerResultsPresenter >> updateResults [
-	
-	treeTable updateResults
-]
 
-{ #category : #update }
-ProfilerResultsPresenter >> updateSummaryText [
-
-	summaryText label:
-		'Reporting - ' , viewModel totalTally asString , ' tallies, '
-		, viewModel totalTime asString , ' msec.'
+	treeTable updateResults.
+	codePresenter methodOrBlock:
+		(treeTable selectedItem ifNotNil: [ :item | item methodOrBlock ])
 ]
 
 { #category : #accessing }

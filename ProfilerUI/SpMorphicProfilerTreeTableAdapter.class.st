@@ -81,10 +81,8 @@ SpMorphicProfilerTreeTableAdapter >> buildWidget [
 	self addModelTo: tableMorph.	
 	tableMorph buildContents.
 	
-	"self addModelTo: tableMorph."
 	widget := tableMorph.
-	"self configureScrolling."
-
+	
 	^ tableMorph
 ]
 

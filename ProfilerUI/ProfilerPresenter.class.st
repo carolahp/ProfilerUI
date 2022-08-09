@@ -41,7 +41,6 @@ ProfilerPresenter >> initializeWindow: aWindowPresenter [
 	aWindowPresenter
 		title: self presenterTitle;
 		initialExtent: self initExtent;
-		windowIcon: self windowIcon;
 		whenOpenedDo: [ self subscribe ];
 		whenClosedDo: [ self unsubscribe ]
 ]

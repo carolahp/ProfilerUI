@@ -6,6 +6,16 @@ AndreasSystemProfiler >> blockCodeFrom: someCode [
 ]
 
 { #category : #'*ProfilerUI' }
+AndreasSystemProfiler >> doItSelectorsPath [
+	^ #( 'nil>>nil' 
+		  'FullBlockClosure>>newProcess'
+	     'ProfilerModel>>profileBlock:' 
+		  'FullBlockClosure>>ensure:'
+	     'ProfilerModel>>DoIt' 
+		  'ProfilerModel>>DoIt' )
+]
+
+{ #category : #'*ProfilerUI' }
 AndreasSystemProfiler >> tallyRoot [
 	^ tallyRoot
 ]
